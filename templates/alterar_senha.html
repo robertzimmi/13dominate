@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Alterar Senha | 13Dominate</title>
+
+  <!-- ✅ Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-dark text-light d-flex align-items-center justify-content-center min-vh-100 px-3">
+
+  <!-- ✅ Flash Alerts -->
+  <div id="flash-container" class="position-fixed top-0 end-0 p-3 z-3" style="z-index: 1055;">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- ✅ Alterar Senha Card -->
+  <div class="card bg-secondary shadow-lg p-4" style="max-width: 420px; width: 100%;">
+    <div class="card-body">
+      <div class="text-center mb-4">
+        <img src="{{ url_for('static', filename='img/13Dominate_Logo.svg') }}" alt="Logo" class="img-fluid" style="height: 50px;">
+        <h2 class="h4 mt-3">Alterar senha</h2>
+        <p class="text-muted small">Troque a senha padrão por uma nova senha.</p>
+      </div>
+
+      <form action="{{ url_for('auth.alterar_senha') }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="mb-3">
+          <label for="nova_senha" class="form-label">Nova Senha</label>
+          <input type="password" name="nova_senha" id="nova_senha" required
+                 class="form-control bg-dark text-light border-secondary">
+        </div>
+
+        <div class="mb-3">
+          <label for="confirmar" class="form-label">Confirmar Nova Senha</label>
+          <input type="password" name="confirmar" id="confirmar" required
+                 class="form-control bg-dark text-light border-secondary">
+        </div>
+
+        {% if erro %}
+          <p class="text-danger text-center small mb-3">{{ erro }}</p>
+        {% endif %}
+
+        <button type="submit" class="btn btn-danger w-100">Salvar nova senha</button>
+      </form>
+
+      <div class="text-center mt-3">
+        <a href="{{ url_for('auth.logout') }}" class="text-decoration-none link-light small">Sair</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- ✅ Auto-dismiss flash messages -->
+  <script>
+    setTimeout(() => {
+      document.querySelectorAll('.alert').forEach(alert => {
+        bootstrap.Alert.getOrCreateInstance(alert).close();
+      });
+    }, 5000);
+  </script>
+</body>
+</html>

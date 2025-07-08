@@ -1,0 +1,113 @@
+{% extends "home.html" %}
+
+{% block title %}Top Heroes - 13Dominate{% endblock %}
+
+{% block content %}
+
+<!-- Select de data -->
+<form method="POST" class="d-flex justify-content-center mb-5">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <select name="data" class="form-select w-auto me-2" onchange="this.form.submit()">
+    {% for data in datas %}
+      <option value="{{ data }}" {% if data == data_selecionada %}selected{% endif %}>{{ data }}</option>
+    {% endfor %}
+  </select>
+</form>
+
+<!-- 🧱 Grid Masonry Bootstrap (JS preenche isso) -->
+<div id="heroes-grid" class="row row-cols-1 row-cols-sm-2 row-cols-md-4 row-cols-lg-6 row-cols-xl-8 g-3">
+  <div class="col">
+    <p class="text-center w-100">Carregando heróis...</p>
+  </div>
+</div>
+
+<!-- JS para buscar dados e popular grid -->
+<script>
+async function carregarHeroes(data) {
+  const grid = document.getElementById("heroes-grid");
+  grid.innerHTML = `<div class="col"><p class="text-center w-100">Carregando...</p></div>`;
+
+  try {
+    const res = await fetch(`/api/topheroes?data=${data}`);
+    const herois = await res.json();
+
+    if (herois.error) {
+      grid.innerHTML = `<div class="col"><p class="text-danger w-100">${herois.error}</p></div>`;
+      return;
+    }
+
+    grid.innerHTML = ""; // limpa os cards
+
+    herois.forEach(hero => {
+      const col = document.createElement("div");
+      col.className = "col d-flex";
+      col.innerHTML = `
+        <div class="card flex-fill shadow-sm position-relative">
+          <img src="${hero.hero_image}" class="card-img-top" alt="${hero.hero_name}" style="object-fit: cover; height: 200px;">
+
+          <div class="win-square">
+            <div class="win-text">Win</div>
+            <div class="win-percent">${hero.win_rate_percent || 0}%</div>
+          </div>
+
+          <div class="card-body text-center">
+            <h5 class="card-title mb-0">${hero.hero_name}</h5>
+            <small class="text-muted">Players: ${hero.total_uses}</small>
+          </div>
+        </div>
+      `;
+      grid.appendChild(col);
+    });
+
+  } catch (err) {
+    grid.innerHTML = `<div class="col"><p class="text-danger w-100">Erro ao carregar heróis.</p></div>`;
+    console.error(err);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const data = "{{ data_selecionada }}";
+  if (data) {
+    carregarHeroes(data);
+  }
+});
+</script>
+
+<!-- Estilo da caixa WIN -->
+<style>
+.win-square {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 48px;
+  height: 48px;
+  background-color: rgba(0, 123, 255, 0.9);
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Roboto', sans-serif;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  user-select: none;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.win-text {
+  font-size: 12px;
+  line-height: 14px;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+
+.win-percent {
+  font-size: 16px;
+  line-height: 18px;
+}
+</style>
+
+{% endblock %}

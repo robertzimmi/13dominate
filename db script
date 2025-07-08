@@ -1,0 +1,78 @@
+-- Simplified PostgreSQL schema
+
+CREATE TABLE public.arteheroes (
+    "Hero" text,
+    link text
+);
+
+CREATE TABLE public.calendar (
+    data text NOT NULL,
+    loja text NOT NULL,
+    cor text NOT NULL,
+    usuario text,
+    data_inserida timestamp DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT calendar_data_loja_unique UNIQUE (data, loja)
+);
+
+CREATE TABLE public.heroes (
+    "PlayerName" text,
+    "PlayerID" text,
+    "Country" text,
+    "Hero" text,
+    "Data" text,
+    "Loja" text,
+    "Formato" text,
+    usuario text,
+    data_inserida timestamp DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT heroes_unique_event_player UNIQUE ("PlayerID", "Data", "Loja", "Formato")
+);
+
+CREATE TABLE public.standings (
+    "Rank" text,
+    "Name" text,
+    "PlayerID" text,
+    "Wins" text,
+    "Data" text,
+    "Loja" text,
+    "Formato" text,
+    usuario text,
+    data_inserida timestamp DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT standings_unique_player_event UNIQUE ("PlayerID", "Data", "Loja", "Formato")
+);
+
+CREATE TABLE public.pairings (
+    "Round" text,
+    "Table" text,
+    "Player1Name" text,
+    "Player1ID" text,
+    "Player2Name" text,
+    "Player2ID" text,
+    "Result" text,
+    "Data" text,
+    "Loja" text,
+    "Formato" text,
+    usuario text,
+    data_inserida timestamp DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pairings_unique_table_round UNIQUE ("Round", "Table", "Data", "Loja", "Formato")
+);
+
+CREATE TABLE public.usuario (
+    usuario text NOT NULL,
+    senha text NOT NULL,
+    email text NOT NULL,
+    tipo text NOT NULL,
+    precisa_trocar_senha boolean DEFAULT true,
+    CONSTRAINT usuario_usuario_key UNIQUE (usuario)
+);
+
+CREATE SEQUENCE public.token_id_seq START 1;
+
+CREATE TABLE public.token (
+    id integer PRIMARY KEY DEFAULT nextval('public.token_id_seq'),
+    access_token text NOT NULL,
+    refresh_token text NOT NULL,
+    client_id text NOT NULL,
+    client_secret text NOT NULL,
+    updated_at timestamp DEFAULT CURRENT_TIMESTAMP,
+    usuario text
+);

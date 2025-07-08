@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}13Dominate{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/13Dominate_Logo.svg') }}" />
+  <!-- Ícones do Material Design -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+    /* Animação para fade-in dos toasts */
+    @keyframes fadeInToast {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-fade-in-toast {
+      animation: fadeInToast 0.3s ease forwards;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-white flex flex-col min-h-screen relative">
+
+  <!-- Navbar -->
+  <nav class="bg-gradient-to-r from-red-900 to-gray-800 px-6 py-4 shadow-md relative z-10">
+    <div class="container mx-auto flex justify-between items-center">
+      <a href="{{ url_for('index') }}" class="flex items-center space-x-3">
+        <img src="{{ url_for('static', filename='img/13Dominate_Logo.svg') }}" alt="Logo" class="h-10" />
+        <span class="text-xl font-bold">13Dominate - ADM</span>
+      </a>
+
+      <!-- Botão de menu (hambúrguer) -->
+      <button id="menuToggle" class="sm:hidden text-gray-300 hover:text-yellow-400 focus:outline-none">
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      <!-- Menu (desktop) -->
+      <ul class="hidden sm:flex space-x-6 text-sm">
+        <li>
+          <a href="#" class="block hover:text-yellow-400 flex items-center space-x-1">
+            <span class="material-symbols-outlined">text_ad</span>
+            <span>Listar</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('calendar') }}" class="hover:text-yellow-400 flex items-center space-x-1">
+            <span class="material-symbols-outlined">calendar_month</span>
+            <span>Calendário</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('uploadcsv') }}" class="hover:text-yellow-400 flex items-center space-x-1">
+            <span class="material-symbols-outlined">get_app</span>
+            <span>Uploadcsv</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('logout') }}" class="hover:text-yellow-400 flex items-center space-x-1">
+            <span class="material-symbols-outlined">logout</span>
+            <span>LogOut</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Sidebar Mobile -->
+  <div
+    id="mobileMenu"
+    class="fixed top-0 left-0 h-full w-64 bg-gray-800 transform -translate-x-full transition-transform duration-300 ease-in-out z-20 sm:hidden shadow-lg"
+  >
+    <div class="p-6">
+      <button id="closeMenu" class="text-gray-400 hover:text-red-400 mb-6">
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      <ul class="space-y-4">
+        <li>
+          <a href="#" class="block hover:text-yellow-400 flex items-center space-x-1">
+            <span class="material-symbols-outlined">text_ad</span>
+            <span>Listar</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('calendar') }}" class="block hover:text-yellow-400 flex items-center space-x-1">
+            <span class="material-symbols-outlined">calendar_month</span>
+            <span>Calendário</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('uploadcsv') }}" class="block hover:text-yellow-400 flex items-center space-x-1">
+            <span class="material-symbols-outlined">get_app</span>
+            <span>Uploadcsv</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('logout') }}" class="block hover:text-yellow-400 flex items-center space-x-1">
+            <span class="material-symbols-outlined">logout</span>
+            <span>LogOut</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Overlay -->
+  <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-10 sm:hidden"></div>
+
+  <!-- Toast container fixado no topo direito -->
+  <div id="toast-container" class="fixed top-5 right-5 space-y-2 z-50">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div
+            class="max-w-xs px-4 py-3 rounded shadow-lg text-white
+            {% if category == 'success' %} bg-green-600
+            {% elif category == 'error' %} bg-red-600
+            {% elif category == 'warning' %} bg-yellow-500
+            {% else %} bg-blue-600 {% endif %}
+            animate-fade-in-toast"
+            role="alert"
+          >
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Conteúdo principal -->
+  <main class="flex-1 container mx-auto px-4 py-8">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-gray-400 py-4 mt-8">
+    <div class="container mx-auto text-center text-sm">
+      © {{ current_year }} 13Dominate project — Todos os direitos reservados.
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script>
+    const menuToggle = document.getElementById('menuToggle');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const closeMenu = document.getElementById('closeMenu');
+    const overlay = document.getElementById('overlay');
+
+    menuToggle.addEventListener('click', () => {
+      mobileMenu.classList.remove('-translate-x-full');
+      overlay.classList.remove('hidden');
+    });
+
+    closeMenu.addEventListener('click', () => {
+      mobileMenu.classList.add('-translate-x-full');
+      overlay.classList.add('hidden');
+    });
+
+    overlay.addEventListener('click', () => {
+      mobileMenu.classList.add('-translate-x-full');
+      overlay.classList.add('hidden');
+    });
+
+    // Auto-remover toasts após 4 segundos com fade-out
+    setTimeout(() => {
+      const toasts = document.querySelectorAll('#toast-container > div');
+      toasts.forEach((toast) => {
+        toast.style.transition = 'opacity 0.5s ease';
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 500);
+      });
+    }, 4000);
+  </script>
+</body>
+</html>

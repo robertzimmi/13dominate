@@ -1,0 +1,118 @@
+{% extends "home.html" %}
+
+{% block title %}Players{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
+  <style>
+    #player-table-wrapper {
+      background-color: rgba(241, 196, 15, 0.1);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 8px rgba(241, 196, 15, 0.3);
+      margin-bottom: 2rem;
+    }
+
+    .gridjs-search-input {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .gridjs-search-input:focus {
+      border-color: #f1c40f;
+      box-shadow: 0 0 0 3px rgba(241, 196, 15, 0.4);
+    }
+
+    h1 {
+      color: white;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Cursor de clique nas linhas */
+    .gridjs-tr:hover {
+      cursor: pointer;
+      background-color: rgba(241, 196, 15, 0.2);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <div id="player-table-wrapper">
+    <div id="player-table"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+<script>
+  fetch("/api/topplayers")
+    .then(res => res.json())
+    .then(data => {
+      const mappedData = data.map(player => [
+        player.name,
+        player.total_partidas,
+        player.armorys_jogados,
+        player.wins,
+        player.losses,
+        Math.round(player.win_rate)
+      ]);
+
+      const grid = new gridjs.Grid({
+  columns: [
+    {
+      name: "Name",
+      formatter: (cell) => gridjs.html(`<a href="/playerprofile?name=${encodeURIComponent(cell)}">${cell}</a>`)
+    },
+    "Total Partidas",
+    "Armorys Jogados",
+    "Wins",
+    "Losses",
+    {
+      name: "Win Rate",
+      formatter: (cell) => `${cell}%`
+    }
+  ],
+  data: mappedData,
+  search: {
+    enabled: true,
+    selector: (cell) => cell.toString().toLowerCase()
+  },
+  sort: true,
+  pagination: {
+    enabled: true,
+    limit: 10
+  },
+  className: {
+    table: 'table table-striped table-hover table-bordered align-middle'
+  }
+});
+
+grid.render(document.getElementById("player-table"));
+
+
+
+      // Após renderizar, adicionar clique nas linhas
+      setTimeout(() => {
+        document.querySelectorAll(".gridjs-tr").forEach(row => {
+          row.addEventListener("click", () => {
+            const playerName = row.cells[0].textContent.trim();
+            const encodedName = encodeURIComponent(playerName);
+            window.location.href = `/playerprofile?name=${encodedName}`;
+          });
+        });
+      }, 100); // tempo para garantir que a tabela tenha sido renderizada
+    })
+    .catch(err => {
+      console.error("Erro ao carregar dados:", err);
+      document.getElementById("player-table").innerHTML = "<p>Erro ao carregar os dados dos jogadores.</p>";
+    });
+</script>
+{% endblock %}

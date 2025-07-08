@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}Admin Reports{% endblock %}
+
+{% block head %}
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h4 class="text-center text-white mb-4">Admin Reports</h4>
+  <div class="d-flex flex-column align-items-center mb-4 gap-2">
+    <div class="d-flex justify-content-center gap-2">
+      <button id="btn-heroes" class="btn btn-outline-danger btn-toggle active">🤺 Heroes</button>
+      <button id="btn-standings" class="btn btn-outline-primary btn-toggle">🥇 Standings</button>
+      <button id="btn-pairings" class="btn btn-outline-success btn-toggle">🤝 Pairings</button>
+    </div>
+  </div>
+
+  {% for key in ['heroes', 'standings', 'pairings'] %}
+    <div id="{{ key }}" class="section-content {% if loop.first %}active-tab{% endif %}">
+      <div class="filter-wrapper">
+        <div class="search-container" id="search-container-{{ key }}"></div>
+        <select id="year-filter-{{ key }}" class="form-select form-select-sm">
+          {% for year in range(2025, 2018, -1) %}
+            <option value="{{ year }}" {% if year == 2025 %}selected{% endif %}>{{ year }}</option>
+          {% endfor %}
+          <option value="*">All</option>
+        </select>
+      </div>
+      <div id="{{ key }}-table"></div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+<script>
+const sections = {
+  heroes: { url: "/api/heroes", columns: ["player_name", "format", "hero", "store", "date"] },
+  standings: { url: "/api/standings", columns: ["name", "rank", "wins", "format", "store", "date"] },
+  pairings: { url: "/api/pairings", columns: ["player1", "player2", "result", "round", "format", "store", "date"] }
+};
+
+const grids = {};
+const rawDataStore = {};
+
+window.toggleDetails = function(el) {
+  const details = el.querySelector('.gridjs-details');
+  if (details) details.classList.toggle('visible');
+};
+
+function createGrid(key) {
+  const { url, columns } = sections[key];
+  const year = document.getElementById(`year-filter-${key}`).value;
+  const target = document.getElementById(`${key}-table`);
+  const searchContainer = document.getElementById(`search-container-${key}`);
+
+  target.innerHTML = `
+    <div class="upload-spinner">
+      <div class="loader"></div>
+    </div>
+  `;
+  searchContainer.innerHTML = "";
+
+  fetch(`${url}?years=${year}`)
+    .then(r => r.json())
+    .then(data => {
+      target.innerHTML = "";
+      searchContainer.innerHTML = "";
+
+      if (!data.data.length) {
+        target.innerHTML = "<p>No data available.</p>";
+        return;
+      }
+
+      rawDataStore[key] = data.data;
+
+      const cols = columns.map(col => ({
+        name: col.charAt(0).toUpperCase() + col.slice(1),
+        id: col
+      }));
+
+      const buildRows = (dataset) => dataset.map(item => {
+        const allFields = Object.entries(item);
+        const summary = item[columns[0]] || "(no data)";
+        const detailsHtml = allFields.map(([k, v]) =>
+          `<strong>${k.charAt(0).toUpperCase() + k.slice(1)}:</strong> ${v}<br>`
+        ).join("");
+
+        return [
+          gridjs.html(`
+            <div class="expand-row" onclick="toggleDetails(this)">
+              <div>${summary}</div>
+              <div class="gridjs-details">
+                ${detailsHtml}
+              </div>
+            </div>
+          `),
+          ...columns.slice(1).map(col => item[col] !== undefined ? item[col] : "")
+        ];
+      });
+
+      if (grids[key]) {
+        grids[key].destroy();
+        grids[key] = null;
+        target.innerHTML = "";
+      }
+
+      const input = document.createElement('input');
+      input.type = "search";
+      input.placeholder = "Search...";
+      input.className = "gridjs-search-input";
+      input.style.width = "100%";
+      input.style.padding = "6px 8px";
+      input.style.fontSize = "0.9rem";
+      input.style.borderRadius = "4px";
+      input.style.border = "1px solid #999";
+      searchContainer.appendChild(input);
+
+      grids[key] = new gridjs.Grid({
+        columns: cols,
+        data: buildRows(data.data),
+        search: false,
+        sort: true,
+        pagination: {
+          enabled: true,
+          limit: 10
+        }
+      });
+
+      grids[key].render(target);
+
+      input.addEventListener('input', () => {
+        const val = input.value.toLowerCase();
+        const filteredData = rawDataStore[key].filter(item =>
+          columns.some(col => {
+            const field = item[col];
+            return field && String(field).toLowerCase().includes(val);
+          })
+        );
+
+        grids[key].updateConfig({
+          data: buildRows(filteredData)
+        }).forceRender();
+      });
+    })
+    .catch(err => {
+      console.error("Erro ao carregar dados:", err);
+      target.innerHTML = "<p>Erro ao carregar dados.</p>";
+    });
+}
+
+document.querySelectorAll('select[id^="year-filter-"]').forEach(select => {
+  select.addEventListener('change', () => {
+    const key = select.id.replace('year-filter-', '');
+    createGrid(key);
+  });
+});
+
+function setActiveTab(tab) {
+  document.querySelectorAll('.section-content').forEach(el => el.classList.remove("active-tab"));
+  document.querySelectorAll('.btn-toggle').forEach(btn => btn.classList.remove("active"));
+  document.getElementById(tab).classList.add("active-tab");
+  document.getElementById("btn-" + tab).classList.add("active");
+  createGrid(tab);
+}
+
+document.getElementById("btn-heroes").onclick = () => setActiveTab("heroes");
+document.getElementById("btn-standings").onclick = () => setActiveTab("standings");
+document.getElementById("btn-pairings").onclick = () => setActiveTab("pairings");
+
+setActiveTab("heroes");
+</script>
+{% endblock %}
