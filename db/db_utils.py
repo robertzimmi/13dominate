@@ -43,7 +43,6 @@ def connect_db():
         print(f"[ERROR] Falha na conexão ao banco: {e}")
         return None
 
-
 def disconnect_db(conn):
     if conn:
         conn.close()
