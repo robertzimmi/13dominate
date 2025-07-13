@@ -12,16 +12,37 @@ from flask import session, flash
 from datetime import datetime
 
 
+import socket
+import psycopg2
+
 def connect_db():
-    host_ipv4 = socket.gethostbyname(Config.DB_HOST)
-    conn = psycopg2.connect(
-        host=host_ipv4,
-        port=Config.DB_PORT,
-        dbname=Config.DB_NAME,
-        user=Config.DB_USER,
-        password=Config.DB_PASSWORD
-    )
-    return conn
+    try:
+        host_ipv4 = socket.gethostbyname(Config.DB_HOST)
+        print(f"[DEBUG] host_ipv4 resolved to: {host_ipv4}")
+        if not host_ipv4:
+            print("[WARNING] host_ipv4 está vazio ou None!")
+    except Exception as e:
+        print(f"[ERROR] Erro ao resolver hostname: {e}")
+        host_ipv4 = None
+
+    if host_ipv4 is None:
+        print("[ERROR] Não é possível conectar, host_ipv4 está None.")
+        return None
+
+    try:
+        conn = psycopg2.connect(
+            host=host_ipv4,
+            port=Config.DB_PORT,
+            dbname=Config.DB_NAME,
+            user=Config.DB_USER,
+            password=Config.DB_PASSWORD
+        )
+        print("[INFO] Conexão com o banco estabelecida com sucesso!")
+        return conn
+    except Exception as e:
+        print(f"[ERROR] Falha na conexão ao banco: {e}")
+        return None
+
 
 def disconnect_db(conn):
     if conn:
