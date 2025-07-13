@@ -2,6 +2,7 @@ import psycopg2
 import csv
 import sys
 import os
+import socket
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import Config
 import time
@@ -12,8 +13,9 @@ from datetime import datetime
 
 
 def connect_db():
+    host_ipv4 = socket.gethostbyname(Config.DB_HOST)
     conn = psycopg2.connect(
-        host=Config.DB_HOST,
+        host=host_ipv4,
         port=Config.DB_PORT,
         dbname=Config.DB_NAME,
         user=Config.DB_USER,
