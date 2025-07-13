@@ -1,0 +1,282 @@
+{% extends "home.html" %}
+{% block title %}Perfil do Jogador{% endblock %}
+
+{% block content %}
+<div class="container mt-4 position-relative">
+
+  <!-- Botão voltar circular azul com seta ↩ -->
+  <button 
+    class="btn btn-primary position-absolute d-flex align-items-center justify-content-center" 
+    style="top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%; color: white; font-size: 1.4rem; line-height: 1; z-index: 1050;"
+    onclick="window.history.back();" 
+    aria-label="Voltar"
+    title="Voltar"
+  >
+    ↩
+  </button>
+
+  <!-- Linha 1: Avatar + Info Geral + Estatísticas -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card p-4 shadow-sm h-100 text-center">
+        <img 
+          src="https://bootdey.com/img/Content/avatar/avatar7.png" 
+          alt="Avatar" 
+          class="rounded-circle img-fluid mb-3 mx-auto d-block" 
+          style="max-width: 150px;"
+        >
+        <h3>{{ player.name }}</h3>
+        <p class="text-muted">apelido</p>
+      </div>
+    </div>
+
+    <div class="col-md-8">
+      <div class="card p-4 shadow-sm h-100">
+        <h5>Estatísticas Gerais</h5>
+        <div class="row">
+          <div class="col-6 col-md-3"><strong>Partidas Jogadas:</strong><br>{{ player.total_partidas }}</div>
+          <div class="col-6 col-md-3"><strong>Armorys Jogados:</strong><br>{{ player.armorys_jogados }}</div>
+          <div class="col-6 col-md-3"><strong>Vitórias:</strong><br>{{ player.wins }}</div>
+          <div class="col-6 col-md-3"><strong>Derrotas:</strong><br>{{ player.losses }}</div>
+          <div class="col-6 col-md-3 mt-2"><strong>Taxa de Vitória:</strong><br>{{ player.win_rate }}%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Linha 2: Métricas principais em cards pequenos -->
+  <h5 class="mb-3 text-center">Informações referentes ao mês de {{ mes_extenso }}</h5>
+
+  <div class="row mb-4">
+
+    {% macro trend_class_icon(current, previous) %}
+      {% if current > previous %}
+        {% set cls = 'text-success' %}
+        {% set icon = '↗' %}
+      {% elif current == previous %}
+        {% set cls = 'text-warning' %}
+        {% set icon = '〰' %}
+      {% else %}
+        {% set cls = 'text-danger' %}
+        {% set icon = '↘' %}
+      {% endif %}
+      {{ cls }},{{ icon }}
+    {% endmacro %}
+
+    {% set cls, icon = trend_class_icon(wins_current_month, wins_last_month).split(',') %}
+    <div class="col-6 col-md-3 mb-3">
+      <div class="card shadow-sm p-3 text-center h-100">
+        <small class="text-muted">WINS</small>
+        <div class="fs-3 fw-bold {{ cls }}">{{ wins_current_month }} {{ icon }}</div>
+        <div class="text-muted" style="font-size: 0.9rem;">Último mês: {{ wins_last_month }}</div>
+      </div>
+    </div>
+
+    {% set cls, icon = trend_class_icon(winrate_current_month, winrate_last_month).split(',') %}
+    <div class="col-6 col-md-3 mb-3">
+      <div class="card shadow-sm p-3 text-center h-100">
+        <small class="text-muted">WINRATE</small>
+        <div class="fs-3 fw-bold {{ cls }}">{{ winrate_current_month }}% {{ icon }}</div>
+        <div class="text-muted" style="font-size: 0.9rem;">Último mês: {{ winrate_last_month }}%</div>
+      </div>
+    </div>
+
+    {% set cls, icon = trend_class_icon(max_wins_current_month, max_wins_last_month).split(',') %}
+    <div class="col-6 col-md-3 mb-3">
+      <div class="card shadow-sm p-3 text-center h-100">
+        <small class="text-muted">MAXIMO DE WINS EM UM ARMORY</small>
+        <div class="fs-3 fw-bold {{ cls }}">{{ max_wins_current_month }} {{ icon }}</div>
+        <div class="text-muted" style="font-size: 0.9rem;">Último mês: {{ max_wins_last_month }}</div>
+      </div>
+    </div>
+
+    {% set cls, icon = trend_class_icon(events_current_month, events_last_month).split(',') %}
+    <div class="col-6 col-md-3 mb-3">
+      <div class="card shadow-sm p-3 text-center h-100">
+        <small class="text-muted">ARMORYS JOGADOS</small>
+        <div class="fs-3 fw-bold {{ cls }}">{{ events_current_month }} {{ icon }}</div>
+        <div class="text-muted" style="font-size: 0.9rem;">Último mês: {{ events_last_month }}</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Linha 3: Gráfico de Vitórias -->
+  <div class="row mb-4">
+  <div class="col-md-6">
+    <div class="card p-3 shadow-sm h-100">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0">Vitórias por Data</h5>
+        <label class="form-check-label">
+          <input type="checkbox" id="toggleChartAllTime" {% if show_all %}checked{% endif %}>
+          Mostrar tudo
+        </label>
+      </div>
+      <canvas id="winsChart"></canvas>
+    </div>
+  </div>
+
+
+    <!-- Tabela de heróis -->
+    <div class="col-md-6">
+      <div class="card p-3 shadow-sm h-100">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+  <h5 class="mb-0">Heróis Utilizados</h5>
+  <div>
+    <label>
+      <input type="checkbox" id="toggleShowAll" {% if show_all %}checked{% endif %}>
+      Mostrar todos os heróis
+    </label>
+  </div>
+</div>
+
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+          <table class="table table-sm table-bordered table-striped mt-2 mb-0" id="heroesTable">
+            <thead class="table-dark">
+              <tr>
+                <th>Herói</th>
+                <th>Vitórias</th>
+                <th>Derrotas</th>
+                <th>Armorys</th>
+                <th>Winrate</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for hero in player_heroes %}
+              <tr>
+                <td>{{ hero.name }}</td>
+                <td>{{ hero.wins }}</td>
+                <td>{{ hero.losses }}</td>
+                <td>{{ hero.armorys }}</td>
+                <td>{{ '%.2f'|format(hero.winrate) }}%</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="text-center">Nenhum herói encontrado.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Script Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  let winsChart;
+
+  function renderChart(labels, data) {
+    const ctx = document.getElementById('winsChart').getContext('2d');
+
+    if (winsChart) {
+      winsChart.destroy();
+    }
+
+    winsChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Vitórias',
+          data: data,
+          borderColor: 'rgb(75, 192, 192)',
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          pointBackgroundColor: 'rgb(75, 192, 192)',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: context => `Vitórias: ${context.parsed.y}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            precision: 0
+          },
+          x: {
+            ticks: {
+              autoSkip: false,
+              maxRotation: 45,
+              minRotation: 45
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function fetchChartData(showAll) {
+    const playerName = "{{ player.name }}";
+    const url = `/api/player_chart_data?name=${encodeURIComponent(playerName)}&show_all=${showAll ? '1' : '0'}`;
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        renderChart(data.labels, data.wins);
+      })
+      .catch(err => {
+        console.error('Erro ao buscar dados do gráfico:', err);
+      });
+  }
+
+  function fetchHeroData(showAll) {
+    const playerName = "{{ player.name }}";
+    const url = `/api/player_heroes_data?name=${encodeURIComponent(playerName)}&show_all=${showAll ? '1' : '0'}`;
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        const tbody = document.querySelector('#heroesTable tbody');
+        tbody.innerHTML = '';
+
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum herói encontrado.</td></tr>';
+          return;
+        }
+
+        data.forEach(hero => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${hero.name}</td>
+            <td>${hero.wins}</td>
+            <td>${hero.losses}</td>
+            <td>${hero.armorys}</td>
+            <td>${hero.winrate.toFixed(2)}%</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(err => {
+        console.error('Erro ao carregar os heróis:', err);
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    fetchChartData(false);
+    fetchHeroData({{ 'true' if show_all else 'false' }});
+  });
+
+  document.getElementById('toggleChartAllTime').addEventListener('change', function() {
+    fetchChartData(this.checked);
+  });
+
+  document.getElementById('toggleShowAll').addEventListener('change', function() {
+    fetchHeroData(this.checked);
+  });
+</script>
+
+
+
+{% endblock %}
