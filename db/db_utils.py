@@ -18,25 +18,14 @@ logger = logging.getLogger(__name__)
 
 def connect_db():
     logger.info(f"DB_HOST: {Config.DB_HOST}")
-    logger.info(f"DB_PORT: {Config.DB_PORT}")
-    logger.info(f"DB_NAME: {Config.DB_NAME}")
-    logger.info(f"DB_USER: {Config.DB_USER}")
-    logger.info(f"DB_PASSWORD set: {bool(Config.DB_PASSWORD)}")
-
-    try:
-        host_ipv4 = socket.gethostbyname(Config.DB_HOST)
-        logger.info(f"host_ipv4 resolved to: {host_ipv4}")
-    except Exception as e:
-        logger.error(f"Erro ao resolver hostname: {e}")
-        return None
-
     try:
         conn = psycopg2.connect(
-            host=host_ipv4,
+            host=Config.DB_HOST,
             port=Config.DB_PORT,
             dbname=Config.DB_NAME,
             user=Config.DB_USER,
-            password=Config.DB_PASSWORD
+            password=Config.DB_PASSWORD,
+            sslmode='require'  # importante para Supabase
         )
         logger.info("Conexão com o banco estabelecida com sucesso!")
         return conn
