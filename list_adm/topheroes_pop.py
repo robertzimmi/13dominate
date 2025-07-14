@@ -1,10 +1,11 @@
-from db import db_utils
+
 from functools import lru_cache
+from db.db_utils import connect_db, disconnect_db
 import time
 
 @lru_cache(maxsize=100)
 def get_hero_stats_by_date(data):
-    conn = db_utils.connect_db()
+    conn = connect_db()
     cur = conn.cursor()
     start = time.time()
 
@@ -33,14 +34,20 @@ WHERE e.data = %s;
 
 @lru_cache(maxsize=1)
 def get_available_dates():
-    conn = db_utils.connect_db()
-    cur = conn.cursor()
+    conn = connect_db()
+    if conn is None:
+        print("[ERROR] Falha ao conectar no banco de dados em get_available_dates.")
+        return tuple()  # Retorna vazio para evitar quebrar a view
 
-    # Datas disponíveis agora vêm da tabela eventos
-    query = 'SELECT DISTINCT data FROM eventos ORDER BY data DESC;'
-    cur.execute(query)
-    datas = [row[0] for row in cur.fetchall()]
-
-    cur.close()
-    conn.close()
-    return tuple(datas)  # Imutável para cache
+    try:
+        cur = conn.cursor()
+        query = 'SELECT DISTINCT data FROM eventos ORDER BY data DESC;'
+        cur.execute(query)
+        datas = [row[0] for row in cur.fetchall()]
+        cur.close()
+        return tuple(datas)
+    except Exception as e:
+        print(f"[ERROR] Erro ao buscar datas disponíveis: {e}")
+        return tuple()
+    finally:
+        disconnect_db(conn)
