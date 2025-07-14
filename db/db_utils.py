@@ -8,6 +8,7 @@ from datetime import datetime
 from flask import session, flash
 from io import StringIO
 import pandas as pd
+from sqlalchemy.engine import make_url
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import Config
@@ -17,18 +18,28 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def connect_db():
-    logger.info(f"DB_HOST: {Config.DB_HOST}")
     try:
+        database_url = os.getenv("DATABASE_URL")
+        if not database_url:
+            logger.error("Variável DATABASE_URL não encontrada no ambiente.")
+            return None
+
+        url = make_url(database_url)
+
+        logger.info(f"Conectando ao banco em: {url.host}:{url.port} com usuário {url.username}")
+
         conn = psycopg2.connect(
-            host=Config.DB_HOST,
-            port=Config.DB_PORT,
-            dbname=Config.DB_NAME,
-            user=Config.DB_USER,
-            password=Config.DB_PASSWORD,
-            sslmode='require'  # importante para Supabase
+            dbname=url.database,
+            user=url.username,
+            password=url.password,
+            host=url.host,
+            port=url.port,
+            sslmode='require'
         )
+
         logger.info("Conexão com o banco estabelecida com sucesso!")
         return conn
+
     except Exception as e:
         logger.error(f"Falha na conexão ao banco: {e}")
         return None
