@@ -1,10 +1,14 @@
-from flask import Flask
+from flask import Flask, jsonify
 
 app = Flask(__name__)
 
-@app.route('/')
+@app.route("/")
 def home():
-    return 'Olá do Flask na Vercel!'
+    return jsonify(message="Olá, Flask na Vercel funcionando!")
 
-# NÃO use app.run()
-# Apenas exporte o app, pois o Vercel vai chamá-lo
+# Ponto obrigatório para Vercel
+def handler(environ, start_response):
+    from werkzeug.wrappers import Request, Response
+    request = Request(environ)
+    response = app.full_dispatch_request()
+    return response(environ, start_response)
