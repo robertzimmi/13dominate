@@ -9,6 +9,7 @@ from flask import session, flash
 from io import StringIO
 import pandas as pd
 from sqlalchemy.engine import make_url
+from urllib.parse import urlparse
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import Config
@@ -18,28 +19,25 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def connect_db():
+    db_url = os.getenv("DATABASE_URL", "")
+    if not db_url:
+        logger.error("DATABASE_URL não está definida.")
+        return None
+
+    parsed = urlparse(db_url)
+
+    logger.info(f"Conectando ao banco em: {parsed.hostname}:{parsed.port} com usuário {parsed.username}")
+
     try:
-        database_url = os.getenv("DATABASE_URL")
-        if not database_url:
-            logger.error("Variável DATABASE_URL não encontrada no ambiente.")
-            return None
-
-        url = make_url(database_url)
-
-        logger.info(f"Conectando ao banco em: {url.host}:{url.port} com usuário {url.username}")
-
         conn = psycopg2.connect(
-            dbname=url.database,
-            user=url.username,
-            password=url.password,
-            host=url.host,
-            port=url.port,
-            sslmode='require'
+            host=parsed.hostname,
+            port=parsed.port,
+            dbname=parsed.path[1:],  # remove o `/` inicial
+            user=parsed.username,
+            password=parsed.password
         )
-
         logger.info("Conexão com o banco estabelecida com sucesso!")
         return conn
-
     except Exception as e:
         logger.error(f"Falha na conexão ao banco: {e}")
         return None
