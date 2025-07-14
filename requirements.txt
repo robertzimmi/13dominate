@@ -11,7 +11,7 @@ Werkzeug>=2.3.3
 numpy==1.24.3
 boxsdk
 gunicorn==21.2.0
-
+SQLAlchemy>=2.0.0
 
 
 google-auth==2.29.0
