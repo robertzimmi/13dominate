@@ -3,36 +3,31 @@ import csv
 import sys
 import os
 import socket
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import Config
-import time
+import logging
+from datetime import datetime
+from flask import session, flash
 from io import StringIO
 import pandas as pd
-from flask import session, flash
-from datetime import datetime
 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import Config
 
-import socket
-import psycopg2
+# Configura o logger
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def connect_db():
-    print("[DEBUGdb] DB_HOST:", Config.DB_HOST)
-    print("[DEBUGdb] DB_PORT:", Config.DB_PORT)
-    print("[DEBUGdb] DB_NAME:", Config.DB_NAME)
-    print("[DEBUGdb] DB_USER:", Config.DB_USER)
-    print("[DEBUGdb] DB_PASSWORD set:", bool(Config.DB_PASSWORD))
+    logger.info(f"DB_HOST: {Config.DB_HOST}")
+    logger.info(f"DB_PORT: {Config.DB_PORT}")
+    logger.info(f"DB_NAME: {Config.DB_NAME}")
+    logger.info(f"DB_USER: {Config.DB_USER}")
+    logger.info(f"DB_PASSWORD set: {bool(Config.DB_PASSWORD)}")
 
     try:
         host_ipv4 = socket.gethostbyname(Config.DB_HOST)
-        print(f"[DEBUGdb] host_ipv4 resolved to: {host_ipv4}")
-        if not host_ipv4:
-            print("[WARNING] host_ipv4 está vazio ou None!")
+        logger.info(f"host_ipv4 resolved to: {host_ipv4}")
     except Exception as e:
-        print(f"[ERROR] Erro ao resolver hostname: {e}")
-        host_ipv4 = None
-
-    if host_ipv4 is None:
-        print("[ERROR] Não é possível conectar, host_ipv4 está None.")
+        logger.error(f"Erro ao resolver hostname: {e}")
         return None
 
     try:
@@ -43,12 +38,11 @@ def connect_db():
             user=Config.DB_USER,
             password=Config.DB_PASSWORD
         )
-        print("[INFO] Conexão com o banco estabelecida com sucesso!")
+        logger.info("Conexão com o banco estabelecida com sucesso!")
         return conn
     except Exception as e:
-        print(f"[ERROR] Falha na conexão ao banco: {e}")
+        logger.error(f"Falha na conexão ao banco: {e}")
         return None
-
 
 def disconnect_db(conn):
     if conn:
