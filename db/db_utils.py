@@ -19,25 +19,28 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def connect_db():
-    db_url = os.getenv("DATABASE_URL", "")
-    if not db_url:
-        logger.error("DATABASE_URL não está definida.")
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        logger.error("DATABASE_URL não configurado.")
         return None
 
-    parsed = urlparse(db_url)
-
-    logger.info(f"Conectando ao banco em: {parsed.hostname}:{parsed.port} com usuário {parsed.username}")
-
     try:
+        url = make_url(database_url)
+
+        # Forçar IPv4
+        ipv4_host = socket.gethostbyname(url.host)
+        logger.info(f"Conectando ao banco em: {ipv4_host}:{url.port} com usuário {url.username}")
+
         conn = psycopg2.connect(
-            host=parsed.hostname,
-            port=parsed.port,
-            dbname=parsed.path[1:],  # remove o `/` inicial
-            user=parsed.username,
-            password=parsed.password
+            host=ipv4_host,
+            port=url.port,
+            dbname=url.database,
+            user=url.username,
+            password=url.password
         )
         logger.info("Conexão com o banco estabelecida com sucesso!")
         return conn
+
     except Exception as e:
         logger.error(f"Falha na conexão ao banco: {e}")
         return None
