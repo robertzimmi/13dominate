@@ -29,10 +29,7 @@ csrf = CSRFProtect(app)
 def inject_current_year():
     return {'current_year': datetime.now().year}
 
-# Rotas básicas
-@app.route('/')
-def index():
-    return render_template('home.html')
+
 
 @app.route('/base')
 def base():
