@@ -4,13 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}13Dominate{% endblock %}</title>
-
-  <a href="{{ url_for('home_bp.index') }}">
-  <img src="{{ url_for('static', filename='img/13Dominate_Logo.svg') }}"
-       alt="Logo 13 Dominate"
-       class="img-fluid mb-4"
-       style="max-height: 200px;">
-</a>
+<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/13Dominate_Logo.svg') }}" />
+  
   <!-- Google Fonts & Material Symbols -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
@@ -32,7 +27,12 @@
   <div class="header-top">
     <div class="top-row">
       <div class="logo">
-        <img src="{{ url_for('static', filename='img/13Dominate_Logo.svg') }}" alt="Logo" />
+        <a href="{{ url_for('home_bp.index') }}">
+  <img src="{{ url_for('static', filename='img/13Dominate_Logo.svg') }}"
+       alt="Logo 13 Dominate"
+       class="img-fluid mb-4"
+       style="max-height: 200px;">
+</a>
       </div>
       <div class="menu-toggle" onclick="toggleMenu()">&#9776;</div>
     </div>
