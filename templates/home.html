@@ -26,14 +26,16 @@
 <header>
   <div class="header-top">
     <div class="top-row">
-      <div class="logo">
-        <a href="{{ url_for('home_bp.index') }}">
-  <img src="{{ url_for('static', filename='img/13Dominate_Logo.svg') }}"
-       alt="Logo 13 Dominate"
-       class="img-fluid mb-4"
-       style="max-height: 200px;">
+<a href="{{ url_for('home_bp.index') }}" class="text-decoration-none text-reset">
+  <div class="card text-center shadow-lg p-5">
+    <img src="{{ url_for('static', filename='img/13Dominate_Logo.svg') }}"
+         alt="Logo 13 Dominate"
+         class="img-fluid mb-4"
+         style="max-height: 200px;">
+    <h1 class="fw-bold display-5">13 Dominate</h1>
+  </div>
 </a>
-      </div>
+
       <div class="menu-toggle" onclick="toggleMenu()">&#9776;</div>
     </div>
 <nav class="nav-links">
