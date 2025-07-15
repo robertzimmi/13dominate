@@ -1,6 +1,7 @@
 # home_routes.py
 from flask import Blueprint, render_template, request
 from list_adm.topheroes_pop import get_available_dates
+from datetime import datetime
 
 home_bp = Blueprint('home_bp', __name__)
 
@@ -9,22 +10,21 @@ home_bp = Blueprint('home_bp', __name__)
 def index():
     return render_template('home.html')
 
+from datetime import datetime
+
 @home_bp.route('/topheroes', methods=["GET"])
 def top_heroes():
-    ano = request.args.get("ano")
-    mes = request.args.get("mes")
-    dia = request.args.get("dia")  # formato YYYY-MM-DD
+    ano = request.args.get("ano", "2025")
+    mes = request.args.get("mes", datetime.now().month)
+    dia = request.args.get("dia")
 
-    # Só usado se quiser popular ainda algum dropdown antigo
-    datas = get_available_dates()  
+    # Pega as datas disponíveis do banco
+    todas_datas = get_available_dates()
 
-    # Anos disponíveis — pode ser dinâmico se quiser (ex: do banco)
-    anos_disponiveis = [2024, 2025]
-
-    meses_disponiveis = [
-        (1, 'Janeiro'), (2, 'Fevereiro'), (3, 'Março'), (4, 'Abril'),
-        (5, 'Maio'), (6, 'Junho'), (7, 'Julho'), (8, 'Agosto'),
-        (9, 'Setembro'), (10, 'Outubro'), (11, 'Novembro'), (12, 'Dezembro')
+    # Filtra as datas para o ano/mês selecionado
+    datas_filtradas = [
+        d for d in todas_datas 
+        if d.year == int(ano) and d.month == int(mes)
     ]
 
     return render_template(
@@ -32,10 +32,9 @@ def top_heroes():
         data_selecionada=dia,
         ano_selecionado=ano,
         mes_selecionado=mes,
-        anos_disponiveis=anos_disponiveis,
-        meses_disponiveis=meses_disponiveis,
-        datas=datas  # pode remover se não estiver mais usando
+        datas_filtradas=datas_filtradas,
     )
+
 
 
 @home_bp.route('/players')

@@ -8,21 +8,33 @@
 <form class="d-flex justify-content-center align-items-center gap-2 mb-5" onsubmit="aplicarFiltros(event)">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-  <select id="anoSelect" class="form-select w-auto">
-    <option value="">Ano</option>
-    {% for ano in anos_disponiveis %}
-      <option value="{{ ano }}" {% if ano == ano_selecionado %}selected{% endif %}>{{ ano }}</option>
-    {% endfor %}
-  </select>
+<select id="anoSelect" class="form-select w-auto">
+  {% for ano in range(2019, 2026) %}
+    <option value="{{ ano }}" {% if ano|string == ano_selecionado|string or ano == 2025 %}selected{% endif %}>{{ ano }}</option>
+  {% endfor %}
+</select>
 
-  <select id="mesSelect" class="form-select w-auto">
-    <option value="">Mês</option>
-    {% for numero, nome in meses_disponiveis %}
-      <option value="{{ numero }}" {% if numero == mes_selecionado %}selected{% endif %}>{{ nome }}</option>
-    {% endfor %}
-  </select>
 
-  <input type="date" id="dataSelect" class="form-control w-auto" value="{{ data_selecionada|default('') }}">
+ {% set mes_atual = mes_selecionado or now().month %}
+<select id="mesSelect" class="form-select w-auto">
+  {% for numero, nome in [
+    (1, 'Janeiro'), (2, 'Fevereiro'), (3, 'Março'), (4, 'Abril'),
+    (5, 'Maio'), (6, 'Junho'), (7, 'Julho'), (8, 'Agosto'),
+    (9, 'Setembro'), (10, 'Outubro'), (11, 'Novembro'), (12, 'Dezembro')
+  ] %}
+    <option value="{{ numero }}" {% if numero|string == mes_selecionado|string or numero == mes_atual %}selected{% endif %}>{{ nome }}</option>
+  {% endfor %}
+</select>
+
+  <select id="dataSelect" class="form-select w-auto">
+  <option value="">Todas as datas</option>
+  {% for data in datas_filtradas %}
+    <option value="{{ data }}" {% if data|string == data_selecionada|string %}selected{% endif %}>
+      {{ data.strftime('%d/%m/%Y') }}
+    </option>
+  {% endfor %}
+</select>
+
 
   <button type="submit" class="btn btn-primary">Filtrar</button>
 </form>
@@ -83,15 +95,16 @@ function aplicarFiltros(event) {
 
   const ano = document.getElementById("anoSelect").value;
   const mes = document.getElementById("mesSelect").value;
-  const data = document.getElementById("dataSelect").value;
+  const dia = document.getElementById("dataSelect").value;
 
   const filtros = {};
   if (ano) filtros.ano = ano;
   if (mes) filtros.mes = mes;
-  if (data) filtros.dia = data;
+  if (dia) filtros.dia = dia;
 
-  carregarHeroes(filtros);
+  carregarHeroes(filtros);  // busca os dados
 }
+
 
 document.addEventListener("DOMContentLoaded", () => {
   // Carrega com o filtro atual (data específica ou último disponível)
