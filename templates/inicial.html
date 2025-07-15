@@ -1,0 +1,51 @@
+{% extends "home.html" %}
+
+{% block title %}Início{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center align-items-start g-4">
+    
+    <!-- Card Central -->
+    <div class="col-lg-6">
+      <div class="card shadow-lg text-center p-5" style="border-radius: 1.5rem;">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo 13 Dominate" class="img-fluid mb-4" style="max-height: 200px;">
+        <h1 class="fw-bold display-5 mb-4">13 Dominate</h1>
+        
+        <!-- Ícones de redes sociais -->
+        <div class="d-flex justify-content-center gap-4">
+          <a href="https://youtube.com" target="_blank" class="text-danger fs-3">
+            <i class="bi bi-youtube"></i>
+          </a>
+          <a href="https://twitch.tv" target="_blank" class="text-purple fs-3">
+            <i class="bi bi-twitch"></i>
+          </a>
+          <a href="https://instagram.com" target="_blank" class="text-dark fs-3">
+            <i class="bi bi-instagram"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cards Laterais -->
+    <div class="col-lg-4 d-flex flex-column gap-4">
+
+      <!-- Último Vencedor -->
+      <div class="card shadow-sm p-4 text-center">
+        <h5 class="mb-2">🏆 Último Vencedor do Armory</h5>
+        <p class="fs-5 fw-semibold">Nome do Jogador</p>
+      </div>
+
+      <!-- Horários das Lojas -->
+      <div class="card shadow-sm p-4">
+        <h5 class="mb-3">🕒 Eventos Semanais</h5>
+        <ul class="list-unstyled mb-0">
+          <li><strong>BOLOVO:</strong> SEG 19h</li>
+          <li><strong>ARENA:</strong> QUA 19h</li>
+          <li><strong>CAVERNA:</strong> SAB 15h</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

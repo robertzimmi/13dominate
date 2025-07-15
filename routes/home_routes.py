@@ -8,7 +8,7 @@ home_bp = Blueprint('home_bp', __name__)
 
 @home_bp.route('/')
 def index():
-    return render_template('home.html')
+    return render_template('inicial.html')
 
 from datetime import datetime
 
