@@ -2,14 +2,12 @@ import psycopg2
 import csv
 import sys
 import os
-import socket
 import logging
 from datetime import datetime
 from flask import session, flash
 from io import StringIO
 import pandas as pd
 from sqlalchemy.engine import make_url
-from urllib.parse import urlparse
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import Config
@@ -18,22 +16,6 @@ from config import Config
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def get_ipv4_host(hostname):
-    try:
-        # Obtem lista de tuplas de endereços
-        addr_info = socket.getaddrinfo(hostname, None)
-        # Filtra só IPv4 (AF_INET)
-        for result in addr_info:
-            family, _, _, _, sockaddr = result
-            if family == socket.AF_INET:
-                ipv4 = sockaddr[0]
-                return ipv4
-        # Se não achar IPv4, levanta erro
-        raise Exception("Nenhum endereço IPv4 encontrado para o hostname")
-    except Exception as e:
-        logger.error(f"Erro ao resolver IPv4: {e}")
-        raise
-    
 def connect_db():
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
@@ -43,11 +25,10 @@ def connect_db():
     try:
         url = make_url(database_url)
 
-        ipv4_host = get_ipv4_host(url.host)
-        logger.info(f"Conectando ao banco em IPv4: {ipv4_host}:{url.port} com usuário {url.username}")
+        logger.info(f"Conectando ao banco: {url.host}:{url.port} com usuário {url.username}")
 
         conn = psycopg2.connect(
-            host=ipv4_host,
+            host=url.host,
             port=url.port,
             dbname=url.database,
             user=url.username,
