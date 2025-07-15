@@ -10,8 +10,6 @@ home_bp = Blueprint('home_bp', __name__)
 def index():
     return render_template('inicial.html')
 
-from datetime import datetime
-
 @home_bp.route('/topheroes', methods=["GET"])
 def top_heroes():
     ano = request.args.get("ano", "2025")

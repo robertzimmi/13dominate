@@ -66,7 +66,7 @@ def login():
         if usuario == 'admin' and senha == 'senha123':
             session['usuario'] = usuario if lembrar else ''
             flash('Login realizado com sucesso!', 'success')
-            return redirect(url_for('index'))
+            return redirect(url_for('home_bp.index'))
         else:
             flash('Usuário ou senha inválidos.', 'error')
             return redirect(url_for('login'))
@@ -78,7 +78,7 @@ def login():
 def logout():
     session.pop('usuario', None)
     flash('Você saiu da conta.', 'success')
-    return redirect(url_for('index'))
+    return redirect(url_for('home_bp.index'))
 
 # Registrar blueprints
 app.register_blueprint(calendar_bp)   # prefixo definido no próprio blueprint
