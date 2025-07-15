@@ -165,7 +165,7 @@ def alterar_senha():
 def logout():
     session.pop('usuario', None)  # Remove apenas o dado de login
     flash('Você saiu da conta.', 'info')
-    return redirect(url_for('index'))
+    return redirect(url_for('home_bp.index'))
 
 
 from flask import flash, redirect, url_for
@@ -227,6 +227,6 @@ def esqueci_senha():
 
     if sucesso:
         flash(mensagem)
-        return redirect(url_for('index'))
+        return redirect(url_for('home_bp.index'))
     else:
         return render_template('esqueci_senha.html', mensagem=mensagem)
