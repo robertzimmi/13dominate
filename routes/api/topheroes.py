@@ -7,11 +7,19 @@ api_topheroes_bp = Blueprint('api_topheroes_bp', __name__)
 def api_top_heroes():
     ano = request.args.get("ano")
     mes = request.args.get("mes")
-    dia = request.args.get("dia")  # dia completo no formato YYYY-MM-DD
+    dia = request.args.get("dia")
 
-    # Nenhum filtro? Retorna erro
+    # Validação simples
     if not (ano or mes or dia):
         return jsonify({"error": "É necessário fornecer ao menos um filtro: ano, mês ou dia."}), 400
+
+    # Tenta validar dia no formato correto, se enviado
+    if dia:
+        try:
+            from datetime import datetime
+            datetime.strptime(dia, "%Y-%m-%d")
+        except ValueError:
+            return jsonify({"error": "Parâmetro 'dia' inválido. Use formato YYYY-MM-DD."}), 400
 
     herois = get_hero_stats_by_filters(ano=ano, mes=mes, dia=dia)
 
@@ -28,3 +36,4 @@ def api_top_heroes():
     ]
 
     return jsonify(herois_json)
+

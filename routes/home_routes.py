@@ -1,5 +1,5 @@
 # home_routes.py
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, jsonify
 from list_adm.topheroes_pop import get_available_dates
 from datetime import datetime
 
@@ -42,6 +42,32 @@ def top_heroes():
         mes_selecionado=mes,
         datas_filtradas=datas_filtradas,
     )
+
+
+@home_bp.route('/datas', methods=['GET'])
+def datas():
+    ano = request.args.get("ano")
+    mes = request.args.get("mes")
+
+    if not ano or not mes:
+        return jsonify([])
+
+    todas_datas = get_available_dates()
+
+    datas_filtradas = []
+    for d in todas_datas:
+        if isinstance(d, str):
+            try:
+                data_obj = datetime.strptime(d, "%Y-%m-%d")
+            except ValueError:
+                continue
+        else:
+            data_obj = d
+
+        if data_obj.year == int(ano) and data_obj.month == int(mes):
+            datas_filtradas.append(data_obj.strftime("%Y-%m-%d"))
+
+    return jsonify(datas_filtradas)
 
 
 

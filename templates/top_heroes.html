@@ -50,7 +50,8 @@ async function carregarDatas(ano, mes) {
   dataSelect.innerHTML = `<option value="">Carregando...</option>`;
 
   try {
-    const res = await fetch(`/api/datas?ano=${ano}&mes=${mes}`);
+    const res = await fetch(`/datas?ano=${ano}&mes=${mes}`);
+
     const datas = await res.json();
 
     // Remove todas as opções anteriores
