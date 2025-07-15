@@ -254,3 +254,35 @@ def insert_calendar_entry(data, loja, event_id, cur):
         UPDATE token SET access_token = %s, refresh_token = %s, updated_at = %s, usuario = %s
         WHERE id = (SELECT id FROM token ORDER BY id DESC LIMIT 1)
     """, (access_token, refresh_token, datetime.utcnow(), usuario))
+
+def buscar_ultimo_vencedor():
+    try:
+        conn = connect_db()
+        if not conn:
+            logger.error("Não foi possível conectar ao banco para buscar o último vencedor.")
+            return "Erro na conexão"
+
+        conn.autocommit = True  # boa prática para queries simples de leitura
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT s."Name"
+                FROM standings s
+                JOIN eventos e ON s.event_id = e.id
+                WHERE e.data = (
+                    SELECT MAX(data) FROM eventos
+                )
+                ORDER BY s."Wins" DESC
+                LIMIT 1
+            """)
+            result = cur.fetchone()
+            if result:
+                return result[0]
+            else:
+                return "Sem vencedor ainda"
+
+    except Exception as e:
+        logger.error(f"Erro ao buscar último vencedor do Armory: {e}")
+        return "Erro na consulta"
+    finally:
+        if conn:
+            conn.close()

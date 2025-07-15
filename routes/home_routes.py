@@ -2,38 +2,14 @@
 from flask import Blueprint, render_template, request, jsonify
 from list_adm.topheroes_pop import get_available_dates
 from datetime import datetime
-from db import get_db_connection
+from db.db_utils import buscar_ultimo_vencedor
 
 home_bp = Blueprint('home_bp', __name__)
 
 
 @home_bp.route('/')
 def index():
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    ultimo_vencedor = "Sem vencedor ainda"
-
-    try:
-        cur.execute("""
-            SELECT s."Name"
-            FROM standings s
-            JOIN eventos e ON s.event_id = e.id
-            WHERE e.data = (
-                SELECT MAX(data) FROM eventos
-            )
-            ORDER BY s."Wins" DESC
-            LIMIT 1
-        """)
-        result = cur.fetchone()
-        if result:
-            ultimo_vencedor = result[0]
-    except Exception as e:
-        print("Erro ao buscar último vencedor do Armory:", e)
-    finally:
-        cur.close()
-        conn.close()
-
+    ultimo_vencedor = buscar_ultimo_vencedor()
     return render_template('inicial.html', ultimo_vencedor=ultimo_vencedor)
 
 
