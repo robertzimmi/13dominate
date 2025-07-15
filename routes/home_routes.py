@@ -76,3 +76,8 @@ def players():
     from list_adm.topplayers_pop import get_top_players
     players_data = get_top_players()
     return render_template('player.html', players=players_data)
+
+@home_bp.route('/aprender')
+def aprender():
+    
+    return render_template('aprender.html')

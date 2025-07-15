@@ -44,10 +44,6 @@ def base():
 
 
 
-@app.route('/aprender')
-def aprender():
-    return render_template('aprender.html')
-
 
 @app.route('/esqueci_senha')
 def esqueci_senha():
