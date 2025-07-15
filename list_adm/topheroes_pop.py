@@ -15,7 +15,8 @@ def get_hero_stats_by_filters(ano=None, mes=None, dia=None):
             v."qtdplayers" AS total_uses,
             v."wins" AS total_wins,
             v."rounds_played" AS total_rounds,
-            v."winrate" AS win_rate_percent
+            v."winrate" AS win_rate_percent,
+            e.nome_loja  -- 🆕 adiciona o nome da loja aqui
         FROM v_hero_stats_mat v
         JOIN eventos e ON v.event_id = e.id
         WHERE 1=1
@@ -44,6 +45,7 @@ def get_hero_stats_by_filters(ano=None, mes=None, dia=None):
     cur.close()
     conn.close()
     return resultado
+
 
 
 

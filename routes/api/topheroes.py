@@ -9,11 +9,9 @@ def api_top_heroes():
     mes = request.args.get("mes")
     dia = request.args.get("dia")
 
-    # Validação simples
     if not (ano or mes or dia):
         return jsonify({"error": "É necessário fornecer ao menos um filtro: ano, mês ou dia."}), 400
 
-    # Tenta validar dia no formato correto, se enviado
     if dia:
         try:
             from datetime import datetime
@@ -22,6 +20,14 @@ def api_top_heroes():
             return jsonify({"error": "Parâmetro 'dia' inválido. Use formato YYYY-MM-DD."}), 400
 
     herois = get_hero_stats_by_filters(ano=ano, mes=mes, dia=dia)
+
+    if not herois:
+        return jsonify({
+            "store_name": None,
+            "herois": []
+        })
+
+    store_name = herois[0][6]  # Pega da primeira linha
 
     herois_json = [
         {
@@ -35,5 +41,8 @@ def api_top_heroes():
         for h in herois
     ]
 
-    return jsonify(herois_json)
+    return jsonify({
+        "store_name": store_name,
+        "herois": herois_json
+    })
 

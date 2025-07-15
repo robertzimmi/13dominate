@@ -39,6 +39,7 @@
 <!-- 🧱 Grid Masonry Bootstrap (JS preenche isso) -->
 <div id="heroes-grid" class="row row-cols-1 row-cols-sm-2 row-cols-md-4 row-cols-lg-6 row-cols-xl-8 g-3">
   <div class="col">
+    <small class="text-muted">Loja: ${hero.store_name}</small>
     <p class="text-center w-100">Carregando heróis...</p>
   </div>
 </div>
@@ -90,7 +91,23 @@ async function carregarHeroes(filtros) {
 
   try {
     const res = await fetch(`/api/topheroes?${query}`);
-    const herois = await res.json();
+    const response = await res.json();
+
+if (response.error) {
+  // ...
+  return;
+}
+
+const herois = response.herois;
+const storeName = response.store_name;
+
+// Exibir a loja no topo da página, por exemplo:
+const grid = document.getElementById("heroes-grid");
+const storeInfo = document.createElement("div");
+storeInfo.className = "col-12 text-center mb-3";
+storeInfo.innerHTML = `<h5 class="text-muted">Loja: ${storeName}</h5>`;
+grid.appendChild(storeInfo);
+
 
     if (herois.error) {
       grid.innerHTML = `<div class="col"><p class="text-danger w-100">${herois.error}</p></div>`;
