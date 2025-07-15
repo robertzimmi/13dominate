@@ -36,15 +36,18 @@
   <button type="submit" class="btn btn-primary">Filtrar</button>
 </form>
 
-<!-- 🧱 Grid Masonry Bootstrap (JS preenche isso) -->
+<!-- Cabeçalho da loja (imagem + nome) -->
+<div id="store-header" style="text-align:center; margin-bottom: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+  <!-- Será preenchido via JS -->
+</div>
+
+<!-- Grid dos heróis -->
 <div id="heroes-grid" class="row row-cols-1 row-cols-sm-2 row-cols-md-4 row-cols-lg-6 row-cols-xl-8 g-3">
   <div class="col">
-    <small class="text-muted">Loja: ${hero.store_name}</small>
     <p class="text-center w-100">Carregando heróis...</p>
   </div>
 </div>
 
-<!-- 📜 Script de carregamento -->
 <script>
 async function carregarDatas(ano, mes) {
   const dataSelect = document.getElementById('dataSelect');
@@ -52,19 +55,15 @@ async function carregarDatas(ano, mes) {
 
   try {
     const res = await fetch(`/datas?ano=${ano}&mes=${mes}`);
-
     const datas = await res.json();
 
-    // Remove todas as opções anteriores
     dataSelect.innerHTML = '';
 
-    // Se não retornar nenhuma data, exibe mensagem (pode ajustar)
     if (!datas.length) {
       dataSelect.innerHTML = `<option value="">Nenhuma data disponível</option>`;
       return;
     }
 
-    // Preenche as datas no select (sem opção "Todas as datas")
     datas.forEach(dataStr => {
       const dateObj = new Date(dataStr);
       const dia = String(dateObj.getDate()).padStart(2, '0');
@@ -93,28 +92,44 @@ async function carregarHeroes(filtros) {
     const res = await fetch(`/api/topheroes?${query}`);
     const response = await res.json();
 
-if (response.error) {
-  // ...
-  return;
-}
-
-const herois = response.herois;
-const storeName = response.store_name;
-
-// Exibir a loja no topo da página, por exemplo:
-const grid = document.getElementById("heroes-grid");
-const storeInfo = document.createElement("div");
-storeInfo.className = "col-12 text-center mb-3";
-storeInfo.innerHTML = `<h5 class="text-muted">Loja: ${storeName}</h5>`;
-grid.appendChild(storeInfo);
-
-
-    if (herois.error) {
-      grid.innerHTML = `<div class="col"><p class="text-danger w-100">${herois.error}</p></div>`;
+    if (response.error) {
+      grid.innerHTML = `<div class="col"><p class="text-danger w-100">${response.error}</p></div>`;
       return;
     }
 
+    const herois = response.herois;
+    const storeName = response.store_name;
+
+    // Monta o header da loja (imagem + nome)
+    const storeHeader = document.getElementById("store-header");
+    storeHeader.innerHTML = ''; // limpa antes
+
+    // Constrói o caminho da imagem considerando maiúsculas + extensão JPG
+    // Troca espaços por underscores (opcional)
+    const nomeImagemLoja = storeName.toUpperCase().replace(/\s+/g, '_') + '.JPG';
+
+    const imgLoja = document.createElement('img');
+    imgLoja.src = `/static/img/lojas/${nomeImagemLoja}`;
+    imgLoja.alt = storeName;
+    imgLoja.style.height = '40px';
+    imgLoja.style.objectFit = 'contain';
+
+    const nomeLojaElem = document.createElement('h3');
+    nomeLojaElem.textContent = storeName;
+    nomeLojaElem.style.margin = 0;
+    nomeLojaElem.style.fontWeight = 'bold';
+    nomeLojaElem.style.fontSize = '1.5rem';
+
+    storeHeader.appendChild(imgLoja);
+    storeHeader.appendChild(nomeLojaElem);
+
+    // Limpa o grid dos heróis
     grid.innerHTML = "";
+
+    if (!herois || herois.length === 0) {
+      grid.innerHTML = `<div class="col"><p class="text-center w-100">Nenhum herói encontrado.</p></div>`;
+      return;
+    }
 
     herois.forEach(hero => {
       const col = document.createElement("div");
@@ -160,7 +175,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const anoSelect = document.getElementById('anoSelect');
   const mesSelect = document.getElementById('mesSelect');
 
-  // Quando mudar ano ou mês, atualiza as datas
   anoSelect.addEventListener('change', () => {
     carregarDatas(anoSelect.value, mesSelect.value);
   });
@@ -168,9 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
     carregarDatas(anoSelect.value, mesSelect.value);
   });
 
-  // Carrega as datas inicialmente
   carregarDatas(anoSelect.value, mesSelect.value).then(() => {
-    // Após carregar as datas, aplica os filtros para mostrar os heróis
     aplicarFiltros();
   });
 });
