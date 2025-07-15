@@ -9,16 +9,34 @@ home_bp = Blueprint('home_bp', __name__)
 def index():
     return render_template('home.html')
 
-@home_bp.route('/topheroes', methods=["GET", "POST"])
+@home_bp.route('/topheroes', methods=["GET"])
 def top_heroes():
-    datas = get_available_dates()
-    data_selecionada = request.form.get("data") if request.method == "POST" else datas[0] if datas else None
+    ano = request.args.get("ano")
+    mes = request.args.get("mes")
+    dia = request.args.get("dia")  # formato YYYY-MM-DD
+
+    # Só usado se quiser popular ainda algum dropdown antigo
+    datas = get_available_dates()  
+
+    # Anos disponíveis — pode ser dinâmico se quiser (ex: do banco)
+    anos_disponiveis = [2024, 2025]
+
+    meses_disponiveis = [
+        (1, 'Janeiro'), (2, 'Fevereiro'), (3, 'Março'), (4, 'Abril'),
+        (5, 'Maio'), (6, 'Junho'), (7, 'Julho'), (8, 'Agosto'),
+        (9, 'Setembro'), (10, 'Outubro'), (11, 'Novembro'), (12, 'Dezembro')
+    ]
 
     return render_template(
         'top_heroes.html',
-        datas=datas,
-        data_selecionada=data_selecionada
+        data_selecionada=dia,
+        ano_selecionado=ano,
+        mes_selecionado=mes,
+        anos_disponiveis=anos_disponiveis,
+        meses_disponiveis=meses_disponiveis,
+        datas=datas  # pode remover se não estiver mais usando
     )
+
 
 @home_bp.route('/players')
 def players():

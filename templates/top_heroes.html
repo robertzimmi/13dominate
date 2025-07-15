@@ -4,14 +4,27 @@
 
 {% block content %}
 
-<!-- Select de data -->
-<form method="POST" class="d-flex justify-content-center mb-5">
+<!-- 🔎 Filtros: Ano, Mês e Data -->
+<form class="d-flex justify-content-center align-items-center gap-2 mb-5" onsubmit="aplicarFiltros(event)">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <select name="data" class="form-select w-auto me-2" onchange="this.form.submit()">
-    {% for data in datas %}
-      <option value="{{ data }}" {% if data == data_selecionada %}selected{% endif %}>{{ data }}</option>
+
+  <select id="anoSelect" class="form-select w-auto">
+    <option value="">Ano</option>
+    {% for ano in anos_disponiveis %}
+      <option value="{{ ano }}" {% if ano == ano_selecionado %}selected{% endif %}>{{ ano }}</option>
     {% endfor %}
   </select>
+
+  <select id="mesSelect" class="form-select w-auto">
+    <option value="">Mês</option>
+    {% for numero, nome in meses_disponiveis %}
+      <option value="{{ numero }}" {% if numero == mes_selecionado %}selected{% endif %}>{{ nome }}</option>
+    {% endfor %}
+  </select>
+
+  <input type="date" id="dataSelect" class="form-control w-auto" value="{{ data_selecionada|default('') }}">
+
+  <button type="submit" class="btn btn-primary">Filtrar</button>
 </form>
 
 <!-- 🧱 Grid Masonry Bootstrap (JS preenche isso) -->
@@ -21,14 +34,16 @@
   </div>
 </div>
 
-<!-- JS para buscar dados e popular grid -->
+<!-- 📜 Script de carregamento -->
 <script>
-async function carregarHeroes(data) {
+async function carregarHeroes(filtros) {
   const grid = document.getElementById("heroes-grid");
   grid.innerHTML = `<div class="col"><p class="text-center w-100">Carregando...</p></div>`;
 
+  const query = new URLSearchParams(filtros).toString();
+
   try {
-    const res = await fetch(`/api/topheroes?data=${data}`);
+    const res = await fetch(`/api/topheroes?${query}`);
     const herois = await res.json();
 
     if (herois.error) {
@@ -36,7 +51,7 @@ async function carregarHeroes(data) {
       return;
     }
 
-    grid.innerHTML = ""; // limpa os cards
+    grid.innerHTML = "";
 
     herois.forEach(hero => {
       const col = document.createElement("div");
@@ -44,16 +59,13 @@ async function carregarHeroes(data) {
       col.innerHTML = `
         <div class="card flex-fill shadow-sm position-relative">
           <img src="${hero.hero_image}" class="card-img-top" alt="${hero.hero_name}" style="object-fit: cover; height: 200px;">
-
           <div class="win-square">
             <div class="win-text">Win</div>
             <div class="win-percent">${hero.win_rate_percent || 0}%</div>
           </div>
-
           <div class="card-body text-center">
             <h5 class="card-title mb-0">${hero.hero_name}</h5>
             <small class="text-muted">Players: ${hero.total_uses}</small>
-
           </div>
         </div>
       `;
@@ -66,11 +78,24 @@ async function carregarHeroes(data) {
   }
 }
 
+function aplicarFiltros(event) {
+  event.preventDefault();
+
+  const ano = document.getElementById("anoSelect").value;
+  const mes = document.getElementById("mesSelect").value;
+  const data = document.getElementById("dataSelect").value;
+
+  const filtros = {};
+  if (ano) filtros.ano = ano;
+  if (mes) filtros.mes = mes;
+  if (data) filtros.dia = data;
+
+  carregarHeroes(filtros);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  const data = "{{ data_selecionada }}";
-  if (data) {
-    carregarHeroes(data);
-  }
+  // Carrega com o filtro atual (data específica ou último disponível)
+  aplicarFiltros(new Event("submit"));
 });
 </script>
 

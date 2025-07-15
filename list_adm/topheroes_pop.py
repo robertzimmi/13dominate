@@ -4,32 +4,47 @@ from db.db_utils import connect_db, disconnect_db
 import time
 
 @lru_cache(maxsize=100)
-def get_hero_stats_by_date(data):
+def get_hero_stats_by_filters(ano=None, mes=None, dia=None):
     conn = connect_db()
     cur = conn.cursor()
-    start = time.time()
 
-    # Join entre a view e a tabela eventos para filtrar pela data
     query = '''
-        SELECT DISTINCT ON (v."Hero", v."event_id")  
-    v."Hero",
-    v."hero_image",
-    v."qtdplayers" AS total_uses,  -- aqui uso qtdplayers que conta jogadores distintos
-    v."wins" AS total_wins,
-    v."rounds_played" AS total_rounds,
-    v."winrate" AS win_rate_percent
-FROM v_hero_stats_mat v
-JOIN eventos e ON v.event_id = e.id
-WHERE e.data = %s;
-
+        SELECT DISTINCT ON (v."Hero", v."event_id")
+            v."Hero",
+            v."hero_image",
+            v."qtdplayers" AS total_uses,
+            v."wins" AS total_wins,
+            v."rounds_played" AS total_rounds,
+            v."winrate" AS win_rate_percent
+        FROM v_hero_stats_mat v
+        JOIN eventos e ON v.event_id = e.id
+        WHERE 1=1
     '''
-    cur.execute(query, (data,))
-    resultado = cur.fetchall()
 
-    print("Tempo só query+fetch:", time.time() - start)
+    filtros = []
+    params = []
+
+    if ano:
+        filtros.append("EXTRACT(YEAR FROM e.data) = %s")
+        params.append(str(ano))
+    if mes:
+        filtros.append("EXTRACT(MONTH FROM e.data) = %s")
+        params.append(str(mes))
+    if dia:
+        filtros.append("e.data = %s")
+        params.append(dia)
+
+    if filtros:
+        query += " AND " + " AND ".join(filtros)
+
+    query += " ORDER BY v.\"Hero\", v.\"event_id\""
+
+    cur.execute(query, tuple(params))
+    resultado = cur.fetchall()
     cur.close()
     conn.close()
-    return tuple(resultado)  # Imutável para cache
+    return resultado
+
 
 
 @lru_cache(maxsize=1)
