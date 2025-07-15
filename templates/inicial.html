@@ -9,7 +9,6 @@
     <!-- Card Central -->
     <div class="col-lg-6">
       <div class="card shadow-lg text-center p-5" style="border-radius: 1.5rem;">
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo 13 Dominate" class="img-fluid mb-4" style="max-height: 200px;">
         <h1 class="fw-bold display-5 mb-4">13 Dominate</h1>
         
         <!-- Ícones de redes sociais -->
@@ -31,10 +30,10 @@
     <div class="col-lg-4 d-flex flex-column gap-4">
 
       <!-- Último Vencedor -->
-      <div class="card shadow-sm p-4 text-center">
-        <h5 class="mb-2">🏆 Último Vencedor do Armory</h5>
-        <p class="fs-5 fw-semibold">Nome do Jogador</p>
-      </div>
+   <div class="card shadow-sm p-4 text-center">
+  <h5 class="mb-2">🏆 Último Vencedor do Armory</h5>
+  <p class="fs-5 fw-semibold">{{ ultimo_vencedor }}</p>
+</div>
 
       <!-- Horários das Lojas -->
       <div class="card shadow-sm p-4">
