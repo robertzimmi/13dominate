@@ -24,28 +24,57 @@ def get_service():
     return build('drive', 'v3', credentials=creds)
 
 def get_or_create_folder(service, folder_name, parent_id=None):
-    query = f"name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder'"
+    print(f"[GoogleDrive] 🔍 Procurando pasta: '{folder_name}'", end="")
     if parent_id:
-        query += f" and '{parent_id}' in parents"
-    results = service.files().list(q=query, spaces='drive', fields='files(id, name)', pageSize=10).execute()
-    folders = results.get('files', [])
+        print(f" dentro da pasta pai ID: {parent_id}")
+        query = f"name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and '{parent_id}' in parents"
+    else:
+        print(" na raiz do Drive")
+        query = f"name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder'"
 
+    results = service.files().list(
+        q=query,
+        spaces='drive',
+        fields='files(id, name, parents)',
+        pageSize=10
+    ).execute()
+
+    folders = results.get('files', [])
     if folders:
-        return folders[0]['id']
-    
+        folder = folders[0]
+        print(f"[GoogleDrive] ✅ Pasta existente: '{folder['name']}' (ID: {folder['id']})")
+        return folder['id']
+
+    # Criar pasta
     metadata = {
         'name': folder_name,
         'mimeType': 'application/vnd.google-apps.folder'
     }
     if parent_id:
         metadata['parents'] = [parent_id]
-    
+
+    print(f"[GoogleDrive] ➕ Pasta não encontrada. Criando '{folder_name}'", end="")
+    if parent_id:
+        print(f" dentro da pasta pai ID: {parent_id}")
+    else:
+        print(" na raiz do Drive")
+
     folder = service.files().create(body=metadata, fields='id').execute()
-    return folder.get('id')
+
+    if 'id' in folder:
+        print(f"[GoogleDrive] ✅ Pasta criada: '{folder_name}' (ID: {folder['id']})")
+        return folder['id']
+    else:
+        error_msg = f"Erro ao criar a pasta '{folder_name}', resposta: {folder}"
+        print(f"[GoogleDrive] ❌ {error_msg}")
+        raise RuntimeError(error_msg)
 
 def upload_to_drive(file_stream: BytesIO, file_name: str, root_folder: str, subfolder: str):
     try:
         service = get_service()
+        print(f"[UPLOAD] 📁 Root folder: {root_folder}")
+        print(f"[UPLOAD] 📂 Subfolder: {subfolder}")
+        print(f"[UPLOAD] 📄 Arquivo: {file_name}")
 
         # 1. Criar ou pegar a pasta da loja (root_folder)
         root_id = get_or_create_folder(service, root_folder)
@@ -53,10 +82,12 @@ def upload_to_drive(file_stream: BytesIO, file_name: str, root_folder: str, subf
         # 2. Criar ou pegar a subpasta dentro dela
         subfolder_id = get_or_create_folder(service, subfolder, parent_id=root_id)
 
-        # 3. Verifica se o arquivo já existe
+        # 3. Verifica se o arquivo já existe na subpasta
         query = f"name = '{file_name}' and '{subfolder_id}' in parents and trashed = false"
+        print(f"[UPLOAD] 🔍 Verificando existência do arquivo com query: {query}")
         results = service.files().list(q=query, fields="files(id, name)").execute()
         files = results.get('files', [])
+        print(f"[UPLOAD] 🔎 Arquivos encontrados: {len(files)}")
 
         media = MediaIoBaseUpload(file_stream, mimetype='text/csv', resumable=True)
 
@@ -64,6 +95,7 @@ def upload_to_drive(file_stream: BytesIO, file_name: str, root_folder: str, subf
             # Atualizar
             file_id = files[0]['id']
             service.files().update(fileId=file_id, media_body=media).execute()
+            print(f"[UPLOAD] ♻️ Arquivo atualizado: {file_name}")
             return f"♻️ Arquivo '{file_name}' atualizado na pasta '{root_folder}/{subfolder}'."
         else:
             # Enviar novo
@@ -72,6 +104,51 @@ def upload_to_drive(file_stream: BytesIO, file_name: str, root_folder: str, subf
                 'parents': [subfolder_id]
             }
             service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+            print(f"[UPLOAD] ✅ Arquivo enviado: {file_name}")
             return f"✅ Arquivo '{file_name}' enviado para '{root_folder}/{subfolder}'."
+
     except Exception as e:
+        print(f"[UPLOAD] ❌ Erro: {repr(e)}")
         return f"❌ Erro ao enviar para o Google Drive: {repr(e)}"
+
+# google_drive_client.py
+
+def delete_drive_folder_by_date(data_str):
+    service = get_service()
+    parent_names = ['ARENA', 'BOLOVO', 'CAVERNA']
+
+    for loja in parent_names:
+        print(f"\n🔎 Buscando pasta raiz da loja: {loja}")
+        # Busca pela pasta da loja (raiz)
+        query_raiz = f"name = '{loja}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+        res = service.files().list(q=query_raiz, fields="files(id, name)").execute()
+        pastas_raiz = res.get("files", [])
+
+        if not pastas_raiz:
+            print(f"⚠️ Loja {loja} não encontrada no Drive.")
+            continue
+
+        raiz_id = pastas_raiz[0]["id"]
+
+        # Nome da subpasta esperado começa com LOJA_data
+        prefixo = f"{loja}_{data_str}_"
+
+        query_subpasta = (
+            f"'{raiz_id}' in parents and "
+            f"name contains '{data_str}' and "
+            f"mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+        )
+
+        subpastas = service.files().list(q=query_subpasta, fields="files(id, name)").execute().get("files", [])
+
+        if not subpastas:
+            print(f"📁 Nenhuma subpasta com data {data_str} dentro de {loja}")
+            continue
+
+        for pasta in subpastas:
+            if pasta["name"].startswith(prefixo):
+                print(f"🗑️ Deletando: {pasta['name']}")
+                service.files().delete(fileId=pasta['id']).execute()
+                print("✅ Deletado com sucesso.")
+            else:
+                print(f"⏩ Ignorando pasta '{pasta['name']}' (prefixo diferente)")

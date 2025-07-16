@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Sorteio - 13Dominate{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4 text-center">🎲 Sorteio de Participantes</h2>
+
+  <div class="row">
+    <!-- Lista de eventos disponíveis -->
+    <div class="col-md-6">
+      <h4>📋 Eventos Disponíveis</h4>
+      <ul id="lista-eventos" class="list-group overflow-auto" style="max-height: 400px;">
+        {% for evento in eventos %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <span data-id="{{ evento.id }}">{{ evento.store_name }} - {{ evento.formato }} - {{ evento.data }}</span>
+          <button class="btn btn-sm btn-primary" onclick="adicionarAoSorteio(this)">Adicionar</button>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- Lista de eventos sorteáveis -->
+    <div class="col-md-6">
+      <h4>✅ Eventos Selecionados</h4>
+      <ul id="eventos-sorteio" class="list-group overflow-auto" style="max-height: 400px;">
+        <!-- Preenchido via JavaScript -->
+      </ul>
+    </div>
+  </div>
+
+  <!-- Botões de sorteio -->
+  <form method="POST" class="text-center mt-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="button" class="btn btn-success btn-lg m-2" onclick="sortear(true)">🎉 Sortear (Nomes únicos)</button>
+    <button type="button" class="btn btn-warning btn-lg m-2" onclick="sortear(false)">🎲 Sortear (Múltiplas entradas)</button>
+  </form>
+
+  <!-- Resultado -->
+  <div class="mt-5 text-center" id="resultado-sorteio" style="display: none;">
+    <h3>🏆 Vencedor: <span id="vencedor"></span></h3>
+    <h5>🔄 Backup: <span id="backup"></span></h5>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const participantesPorEvento = {};
+
+// Pega o token CSRF do input hidden dentro do form
+function getCsrfToken() {
+  return document.querySelector('input[name="csrf_token"]').value;
+}
+
+async function fetchParticipantes(ids) {
+  const csrfToken = getCsrfToken();
+
+  const res = await fetch("/admin/sorteio/participantes", {
+    method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      "X-CSRFToken": csrfToken
+    },
+    body: JSON.stringify({ event_ids: ids })
+  });
+
+  const data = await res.json();
+  for (const [eventId, nomes] of Object.entries(data)) {
+    participantesPorEvento[eventId] = nomes;
+  }
+}
+
+function adicionarAoSorteio(button) {
+  const item = button.closest('li');
+  const span = item.querySelector('span');
+  const texto = span.textContent;
+  const id = span.dataset.id;
+
+  const novoItem = document.createElement('li');
+  novoItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+  novoItem.innerHTML = `
+    <span data-id="${id}">${texto}</span>
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm btn-info" onclick="verParticipantes('${id}', '${texto}')">👥 Ver Participantes</button>
+      <button class="btn btn-sm btn-danger" onclick="removerDoSorteio(this)">Remover</button>
+    </div>
+  `;
+
+  document.getElementById('eventos-sorteio').appendChild(novoItem);
+  item.remove();
+
+  if (!participantesPorEvento[id]) {
+    fetchParticipantes([id]);
+  }
+}
+
+function removerDoSorteio(button) {
+  const item = button.closest('li');
+  const span = item.querySelector('span');
+  const texto = span.textContent;
+  const id = span.dataset.id;
+
+  const novoItem = document.createElement('li');
+  novoItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+  novoItem.innerHTML = `
+    <span data-id="${id}">${texto}</span>
+    <button class="btn btn-sm btn-primary" onclick="adicionarAoSorteio(this)">Adicionar</button>
+  `;
+  document.getElementById('lista-eventos').appendChild(novoItem);
+  item.remove();
+}
+
+function verParticipantes(id, texto) {
+  const nomes = participantesPorEvento[id] || [];
+  if (nomes.length === 0) {
+    alert(`Nenhum participante encontrado para "${texto}".`);
+  } else {
+    alert(`Participantes de "${texto}":\n\n` + nomes.join('\n'));
+  }
+}
+
+async function sortear(nomesUnicos = true) {
+  const csrfToken = getCsrfToken();
+
+  const spans = document.querySelectorAll('#eventos-sorteio li span');
+  let todosNomes = [];
+
+  spans.forEach(span => {
+    const id = span.dataset.id;
+    const nomes = participantesPorEvento[id] || [];
+    if (nomesUnicos) {
+      todosNomes = todosNomes.concat([...new Set(nomes)]);
+    } else {
+      todosNomes = todosNomes.concat(nomes);
+    }
+  });
+
+  if (todosNomes.length < 2) {
+    alert("Participantes insuficientes para sortear.");
+    return;
+  }
+
+  // Envia os participantes para o backend fazer o sorteio e imprimir no terminal
+  const response = await fetch('/admin/sorteio/sortear', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken
+    },
+    body: JSON.stringify({
+      participantes: todosNomes,
+      nomes_unicos: nomesUnicos
+    })
+  });
+
+  if (!response.ok) {
+    alert("Erro ao realizar o sorteio.");
+    return;
+  }
+
+  const data = await response.json();
+
+  document.getElementById('vencedor').textContent = data.vencedor;
+  document.getElementById('backup').textContent = data.backup;
+  document.getElementById('resultado-sorteio').style.display = 'block';
+}
+
+</script>
+{% endblock %}

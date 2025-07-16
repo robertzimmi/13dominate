@@ -8,12 +8,12 @@ from dotenv import load_dotenv
 from routes.calendar_routes import calendar_bp
 from routes.upload_routes import upload_bp
 from routes.auth_routes import auth_bp
-#from box_integration.box_client import upload_to_box
+from routes.delete_routes import delete_bp
 from routes.lista_routes import lista_bp
 from routes.api.lista_api import lista_api
 from routes.home_routes import home_bp
 from routes.api.topheroes import api_topheroes_bp
-
+from routes.sorteio_routes import sorteio_bp
 from routes.api.topplayers import api_topplayers
 
 
@@ -81,6 +81,7 @@ def logout():
     return redirect(url_for('home_bp.index'))
 
 # Registrar blueprints
+app.register_blueprint(delete_bp)
 app.register_blueprint(calendar_bp)   # prefixo definido no próprio blueprint
 app.register_blueprint(upload_bp)     # /upload
 app.register_blueprint(auth_bp)
@@ -89,5 +90,6 @@ app.register_blueprint(lista_api)
 app.register_blueprint(home_bp)
 app.register_blueprint(api_topheroes_bp)
 app.register_blueprint(api_topplayers)
+app.register_blueprint(sorteio_bp)
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

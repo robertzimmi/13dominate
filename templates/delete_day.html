@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Deletar Dia{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">🗑️ Deletar um Dia Inteiro</h2>
+
+  <form method="POST" id="delete-form">
+    <!-- ✅ Proteção CSRF -->
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="mb-3">
+      <label for="data" class="form-label">Selecione uma data:</label>
+      <select name="data" id="data" class="form-select" required>
+        <option value="">-- Escolha uma data --</option>
+        {% for d in datas %}
+          <option value="{{ d.strftime('%Y-%m-%d') }}">{{ d.strftime('%d/%m/%Y') }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-danger">Deletar Dia</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('delete-form').addEventListener('submit', function(event) {
+    const select = document.getElementById('data');
+    const selectedOption = select.options[select.selectedIndex];
+
+    if (!select.value) {
+      alert("Por favor, selecione uma data.");
+      event.preventDefault();
+      return;
+    }
+
+    const confirmDelete = confirm(`Tem certeza que deseja deletar o dia ${selectedOption.text}? Esta ação não pode ser desfeita!`);
+
+    if (!confirmDelete) {
+      event.preventDefault();
+    }
+  });
+</script>
+{% endblock %}

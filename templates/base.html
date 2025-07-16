@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>{% block title %}13Dominate - Teste Menu Mobile{% endblock %}</title>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
 
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/13Dominate_Logo.svg') }}">
 
@@ -37,19 +38,27 @@
       <div class="menu-toggle" onclick="toggleMenu()">&#9776;</div>
     </div>
     <nav class="nav-links">
-      <a href="{{ url_for('lista_bp.lista_adm') }}">
-        <span class="material-symbols-outlined">menu_open</span> Listar
-      </a>
-      <a href="{{ url_for('calendar.calendar_page') }}">
-        <span class="material-symbols-outlined">calendar_today</span> Calendário
-      </a>
-      <a href="{{ url_for('upload.upload_page') }}">
-        <span class="material-symbols-outlined">upload</span> Uploadcsv
-      </a>
-      <a href="{{ url_for('logout') }}">
-        <span class="material-symbols-outlined">logout</span> LogOut
-      </a>
-    </nav>
+  <a href="{{ url_for('lista_bp.lista_adm') }}">
+    <span class="material-symbols-outlined">menu_open</span> Listar
+  </a>
+  <a href="{{ url_for('calendar.calendar_page') }}">
+    <span class="material-symbols-outlined">calendar_today</span> Calendário
+  </a>
+  <a href="{{ url_for('upload.upload_page') }}">
+    <span class="material-symbols-outlined">upload</span> Uploadcsv
+  </a>
+  <a href="{{ url_for('delete_bp.delete_day') }}">
+    <span class="material-symbols-outlined">delete</span> DeleteDia
+  </a>
+<a href="{{ url_for('sorteio_bp.sorteio_page') }}">
+  <span class="material-symbols-outlined">shuffle</span> Sorteio
+</a>
+
+  <a href="{{ url_for('logout') }}">
+    <span class="material-symbols-outlined">logout</span> LogOut
+  </a>
+</nav>
+
   </div>
 </header>
 
