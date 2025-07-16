@@ -8,6 +8,7 @@ def api_top_heroes():
     ano = request.args.get("ano")
     mes = request.args.get("mes")
     dia = request.args.get("dia")
+    formato = request.args.get("formato")
 
     if not (ano or mes or dia):
         return jsonify({"error": "É necessário fornecer ao menos um filtro: ano, mês ou dia."}), 400
@@ -19,7 +20,7 @@ def api_top_heroes():
         except ValueError:
             return jsonify({"error": "Parâmetro 'dia' inválido. Use formato YYYY-MM-DD."}), 400
 
-    herois = get_hero_stats_by_filters(ano=ano, mes=mes, dia=dia)
+    herois = get_hero_stats_by_filters(ano=ano, mes=mes, dia=dia, formato=formato)
 
     if not herois:
         return jsonify({
@@ -27,7 +28,7 @@ def api_top_heroes():
             "herois": []
         })
 
-    store_name = herois[0][6]  # Pega da primeira linha
+    store_name = herois[0][6]
 
     herois_json = [
         {
@@ -43,6 +44,20 @@ def api_top_heroes():
 
     return jsonify({
         "store_name": store_name,
+        "formato": formato,
         "herois": herois_json
     })
 
+from list_adm.topheroes_pop import get_available_dates_by_filters
+
+@api_topheroes_bp.route('/api/get_dates', methods=['GET'])
+def get_dates():
+    ano = request.args.get("ano")
+    mes = request.args.get("mes")
+    formato = request.args.get("formato", "todos")
+
+    if not (ano and mes):
+        return jsonify([])
+
+    datas = get_available_dates_by_filters(ano, mes, formato)
+    return jsonify(datas)

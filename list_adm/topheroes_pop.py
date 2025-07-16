@@ -4,7 +4,8 @@ from db.db_utils import connect_db, disconnect_db
 import time
 
 @lru_cache(maxsize=100)
-def get_hero_stats_by_filters(ano=None, mes=None, dia=None):
+@lru_cache(maxsize=100)
+def get_hero_stats_by_filters(ano=None, mes=None, dia=None, formato=None):
     conn = connect_db()
     cur = conn.cursor()
 
@@ -34,6 +35,9 @@ def get_hero_stats_by_filters(ano=None, mes=None, dia=None):
     if dia:
         filtros.append("e.data = %s")
         params.append(dia)
+    if formato and formato != "todos":
+        filtros.append("LOWER(e.formato) = %s")
+        params.append(formato.lower())
 
     if filtros:
         query += " AND " + " AND ".join(filtros)
@@ -46,6 +50,30 @@ def get_hero_stats_by_filters(ano=None, mes=None, dia=None):
     conn.close()
     return resultado
 
+
+@lru_cache(maxsize=100)
+def get_available_dates_by_filters(ano, mes, formato):
+    conn = connect_db()
+    cur = conn.cursor()
+
+    query = '''
+        SELECT DISTINCT data
+        FROM eventos
+        WHERE EXTRACT(YEAR FROM data) = %s AND EXTRACT(MONTH FROM data) = %s
+    '''
+    params = [ano, mes]
+
+    if formato and formato != "todos":
+        query += " AND LOWER(formato) = %s"
+        params.append(formato.lower())
+
+    query += " ORDER BY data DESC"
+
+    cur.execute(query, tuple(params))
+    datas = [row[0].strftime('%Y-%m-%d') for row in cur.fetchall()]
+    cur.close()
+    conn.close()
+    return datas
 
 
 

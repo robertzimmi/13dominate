@@ -8,14 +8,15 @@
 <form class="d-flex justify-content-center align-items-center gap-2 mb-5" onsubmit="aplicarFiltros(event)">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-  <select id="anoSelect" class="form-select w-auto">
+  <select id="anoSelect" name="ano" class="form-select w-auto">
+
     {% for ano in range(2019, 2026) %}
       <option value="{{ ano }}" {% if ano|string == ano_selecionado|string or ano == 2025 %}selected{% endif %}>{{ ano }}</option>
     {% endfor %}
   </select>
 
   {% set mes_atual = mes_selecionado or now().month %}
-  <select id="mesSelect" class="form-select w-auto">
+  <select id="mesSelect" name="mes" class="form-select w-auto">
     {% for numero, nome in [
       (1, 'Janeiro'), (2, 'Fevereiro'), (3, 'Março'), (4, 'Abril'),
       (5, 'Maio'), (6, 'Junho'), (7, 'Julho'), (8, 'Agosto'),
@@ -25,7 +26,7 @@
     {% endfor %}
   </select>
 
-  <select id="dataSelect" class="form-select w-auto">
+  <select id="dataSelect" name="dia" class="form-select w-auto">
     {% for data in datas_filtradas %}
       <option value="{{ data }}" {% if data|string == data_selecionada|string %}selected{% endif %}>
         {{ data.strftime('%d/%m/%Y') }}
@@ -35,6 +36,15 @@
 
   <button type="submit" class="btn btn-primary">Filtrar</button>
 </form>
+<!-- 🎯 Checkboxes de formato -->
+<div class="d-flex justify-content-center align-items-center gap-3 mb-3" id="formato-checkboxes">
+  <label><input type="checkbox" name="formato" value="todos" checked> Todos</label>
+  <label><input type="checkbox" name="formato" value="classic"> CC</label>
+  <label><input type="checkbox" name="formato" value="living"> LL</label>
+  <label><input type="checkbox" name="formato" value="commoner"> Commoner</label>
+  <label><input type="checkbox" name="formato" value="blitz"> Blitz</label>
+</div>
+
 
 <!-- Cabeçalho da loja (imagem + nome) -->
 <div id="store-header" style="text-align:center; margin-bottom: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;">
@@ -47,14 +57,59 @@
     <p class="text-center w-100">Carregando heróis...</p>
   </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const checkboxes = document.querySelectorAll('input[name="formato"]');
+  const selectAno = document.querySelector('select[name="ano"]');
+  const selectMes = document.querySelector('select[name="mes"]');
+  const selectDia = document.querySelector('select[name="dia"]');
+
+  function atualizarDias() {
+    const ano = selectAno.value;
+    const mes = selectMes.value;
+    const formato = document.querySelector('input[name="formato"]:checked')?.value || 'todos';
+
+    fetch(`/api/get_dates?ano=${ano}&mes=${mes}&formato=${formato}`)
+      .then(res => res.json())
+      .then(data => {
+        selectDia.innerHTML = '';
+        data.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d;
+          opt.textContent = d;
+          selectDia.appendChild(opt);
+        });
+      });
+  }
+
+  // Marcação única nos checkboxes
+  checkboxes.forEach(cb => {
+    cb.addEventListener('change', () => {
+      if (cb.checked) {
+        checkboxes.forEach(other => {
+          if (other !== cb) other.checked = false;
+        });
+        atualizarDias(); // atualiza os dias
+      }
+    });
+  });
+
+  // Atualizar dias se ano ou mês mudar
+  selectAno.addEventListener('change', atualizarDias);
+  selectMes.addEventListener('change', atualizarDias);
+});
+</script>
 
 <script>
 async function carregarDatas(ano, mes) {
   const dataSelect = document.getElementById('dataSelect');
   dataSelect.innerHTML = `<option value="">Carregando...</option>`;
 
+  // ✅ Captura o formato selecionado
+  const formato = document.querySelector('input[name="formato"]:checked')?.value || 'todos';
+
   try {
-    const res = await fetch(`/datas?ano=${ano}&mes=${mes}`);
+    const res = await fetch(`/api/get_dates?ano=${ano}&mes=${mes}&formato=${formato}`);
     const datas = await res.json();
 
     dataSelect.innerHTML = '';
@@ -86,6 +141,10 @@ async function carregarHeroes(filtros) {
   const grid = document.getElementById("heroes-grid");
   grid.innerHTML = `<div class="col"><p class="text-center w-100">Carregando...</p></div>`;
 
+  // ✅ Adiciona o formato aos filtros
+  const formatoSelecionado = document.querySelector('input[name="formato"]:checked')?.value || 'todos';
+  filtros.formato = formatoSelecionado;
+
   const query = new URLSearchParams(filtros).toString();
 
   try {
@@ -99,29 +158,32 @@ async function carregarHeroes(filtros) {
 
     const herois = response.herois;
     const storeName = response.store_name;
+    const formato = response.formato || formatoSelecionado;
 
-    // Monta o header da loja (imagem + nome)
+    // Monta o header da loja (imagem + nome + formato)
     const storeHeader = document.getElementById("store-header");
-    storeHeader.innerHTML = ''; // limpa antes
+    storeHeader.innerHTML = '';
 
-    // Constrói o caminho da imagem considerando maiúsculas + extensão JPG
-    // Troca espaços por underscores (opcional)
-    const nomeImagemLoja = storeName.toUpperCase().replace(/\s+/g, '_') + '.JPG';
+    if (storeName) {
+      const nomeImagemLoja = storeName.toUpperCase().replace(/\s+/g, '_') + '.JPG';
 
-    const imgLoja = document.createElement('img');
-    imgLoja.src = `/static/img/lojas/${nomeImagemLoja}`;
-    imgLoja.alt = storeName;
-    imgLoja.style.height = '40px';
-    imgLoja.style.objectFit = 'contain';
+      const imgLoja = document.createElement('img');
+      imgLoja.src = `/static/img/lojas/${nomeImagemLoja}`;
+      imgLoja.alt = storeName;
+      imgLoja.style.height = '40px';
+      imgLoja.style.objectFit = 'contain';
 
-    const nomeLojaElem = document.createElement('h3');
-    nomeLojaElem.textContent = storeName;
-    nomeLojaElem.style.margin = 0;
-    nomeLojaElem.style.fontWeight = 'bold';
-    nomeLojaElem.style.fontSize = '1.5rem';
+      const nomeLojaElem = document.createElement('h3');
+      nomeLojaElem.textContent = formato && formato !== "todos"
+        ? `${storeName} - ${formato}`
+        : storeName;
+      nomeLojaElem.style.margin = 0;
+      nomeLojaElem.style.fontWeight = 'bold';
+      nomeLojaElem.style.fontSize = '1.5rem';
 
-    storeHeader.appendChild(imgLoja);
-    storeHeader.appendChild(nomeLojaElem);
+      storeHeader.appendChild(imgLoja);
+      storeHeader.appendChild(nomeLojaElem);
+    }
 
     // Limpa o grid dos heróis
     grid.innerHTML = "";
