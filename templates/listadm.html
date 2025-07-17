@@ -4,11 +4,135 @@
 {% block head %}
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+<style>
+  /* Só sobrescreve o fundo preto do body e html */
+  body, html {
+    background-color: #F1E3D3 !important; /* fundo clarinho */
+  }
+
+  /* Card principal com fundo branco, sombra e padding */
+  .content-card {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto 3rem auto; /* centraliza horizontal e dá margem abaixo */
+    overflow-x: auto; /* scroll horizontal se tabela for larga */
+  }
+
+  /* Ajuste para o título */
+  h4.text-center.text-white.mb-4 {
+    color: #1B4D3E !important; /* deixa o título escuro e visível */
+  }
+
+  /* Para melhorar a área dos botões */
+  .btn-toggle.active {
+    background-color: #E07A5F;
+    color: white;
+    border-color: #E07A5F;
+  }
+
+  /* Se quiser ajustar largura dos selects e buscas */
+  .filter-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Área do search para ocupar a maior parte */
+  .search-container {
+    flex-grow: 1;
+    min-width: 150px;
+  }
+
+  /* Select pequeno */
+  .form-select-sm {
+    width: 150px;
+  }
+
+  /* Gridjs detalhes expansão */
+  .expand-row {
+    cursor: pointer;
+  }
+  .gridjs-details {
+    display: none;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #444;
+  }
+  .gridjs-details.visible {
+    display: block;
+  }
+  /* ===========================
+   🗂️ Seções e Botões
+=========================== */
+.btn-toggle.active {
+  background-color: #ffffff;
+  color: black;
+}
+
+#heroes.active-tab {
+  background-color: rgba(229, 115, 115, 0.8); /* vermelho claro */
+}
+
+#standings.active-tab {
+  background-color: rgba(100, 181, 246, 0.8); /* azul claro */
+}
+
+#pairings.active-tab {
+  background-color: rgba(129, 199, 132, 0.8); /* verde claro */
+}
+
+/* ===========================
+   Visibilidade das seções
+=========================== */
+.section-content {
+  visibility: hidden;
+  height: 0;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  max-width: 100vw;
+}
+
+.section-content.active-tab {
+  visibility: visible;
+  height: auto;
+  overflow: visible;
+}
+/* ===========================
+   🔍 Filtro & Search
+=========================== */
+.filter-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  gap: 1rem;
+}
+
+select[id^="year-filter-"] {
+  width: 140px;
+  padding: 7.5px 8px;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.search-container {
+  flex-grow: 1;
+  max-width: 300px;
+  min-width: 120px;
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<div class="content-card">
   <h4 class="text-center text-white mb-4">Admin Reports</h4>
   <div class="d-flex flex-column align-items-center mb-4 gap-2">
     <div class="d-flex justify-content-center gap-2">

@@ -1,329 +1,164 @@
-/* ===========================
-   🌑 Base
-=========================== */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Reports - Exemplo</title>
 
-html, body {
-  overflow-x: hidden;
-  max-width: 100vw;
-  margin: 0;
-  font-family: 'Roboto', sans-serif;
-  background-color: #121212;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 
-/* ===========================
-   🔒 Main container
-=========================== */
-main {
-  flex: 1;
-  padding: 20px;
-  width: 100%;
-  box-sizing: border-box;
-}
+  <!-- Grid.js CSS -->
+  <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
 
-.container {
-  width: 100%;
-  max-width: 100vw;
-  padding: 0 12px;
-  margin: 0 auto;
-  box-sizing: border-box;
-}
+  <style>
+    html, body {
+      overflow-x: hidden;
+      max-width: 100vw;
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: #121212;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
 
-.section-content {
-  visibility: hidden;
-  height: 0;
-  overflow: hidden;
-  position: relative;
-  width: 100%;
-  max-width: 100vw;
-}
+    main {
+      flex: 1;
+      padding: 20px;
+      width: 100%;
+      box-sizing: border-box;
+    }
 
-.section-content.active-tab {
-  visibility: visible;
-  height: auto;
-  overflow: visible;
-}
+    .container {
+      width: 100%;
+      max-width: 100vw;
+      padding: 0 12px;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
 
-/* ===========================
-   🧭 Header
-=========================== */
-header {
-  background: linear-gradient(to right, #7f1d1d, #1f2937);
-  padding: 10px 20px;
-}
+    /* ===========================
+       Grid.js responsivo para mobile
+    ============================ */
+    @media (max-width: 768px) {
+      /* Esconder colunas menos a primeira */
+      .gridjs-table td:not(:first-child),
+      .gridjs-table th:not(:first-child) {
+        display: none;
+      }
 
-.header-top {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
+      /* Linha clicável */
+      .expand-row {
+        cursor: pointer;
+        background-color: #e3f2fd;
+        padding: 8px;
+      }
 
-.top-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
+      /* Conteúdo oculto da linha */
+      .gridjs-details {
+        display: none;
+        font-size: 0.9rem;
+        margin-top: 5px;
+        background-color: #f1f1f1;
+        color: black;
+        padding: 8px;
+        border-radius: 4px;
+      }
 
-.logo img {
-  height: 40px;
-}
+      /* Mostrar detalhes quando ativo */
+      .gridjs-details.visible {
+        display: block;
+      }
+    }
 
-.menu-toggle {
-  display: none;
-  color: white;
-  font-size: 28px;
-  cursor: pointer;
-}
+    @media (min-width: 769px) {
+      /* Mostrar todas as colunas no desktop */
+      .gridjs-table td,
+      .gridjs-table th {
+        display: table-cell !important;
+      }
 
-/* ===========================
-   🔗 Navegação
-=========================== */
-nav.nav-links {
-  display: flex;
-  gap: 20px;
-}
+      /* Esconder detalhes sempre no desktop */
+      .gridjs-details {
+        display: none !important;
+      }
 
-nav.nav-links a {
-  color: white;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-}
+      /* Remover estilos clicáveis da linha */
+      .expand-row {
+        cursor: default;
+        background-color: transparent;
+        padding: 0;
+      }
+    }
+  </style>
+</head>
+<body>
 
-nav a span.material-symbols-outlined {
-  font-size: 20px;
-  margin-right: 6px;
-}
+  <main class="container">
+    <h4 class="text-center mb-4">Admin Reports - Exemplo</h4>
 
-/* ===========================
-   13dominate home
-=========================== */
-#logoTrigger {
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
-}
+    <div id="table-container"></div>
+  </main>
 
-/* ===========================
-   🦶 Rodapé
-=========================== */
-.footer {
-  background-color: #2c2c2c;
-  color: #ddd;
-  padding: 16px 20px;
-  font-size: 14px;
-}
+  <!-- Bootstrap Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- Grid.js -->
+  <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
 
-.footer-content {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  text-align: center;
-}
+  <script>
+    // Função para abrir/fechar detalhes
+    function toggleDetails(el) {
+      const details = el.querySelector('.gridjs-details');
+      if (details) {
+        details.classList.toggle('visible');
+      }
+    }
 
-.footer-content p {
-  margin: 0;
-  flex: 1 1 auto;
-  white-space: nowrap;
-}
+    // Exemplo de dados e colunas
+    const columns = ['Nome', 'Idade', 'Email', 'Cidade'];
+    const data = [
+      { Nome: 'Maria', Idade: 28, Email: 'maria@email.com', Cidade: 'São Paulo' },
+      { Nome: 'João', Idade: 34, Email: 'joao@email.com', Cidade: 'Rio de Janeiro' },
+      { Nome: 'Ana', Idade: 22, Email: 'ana@email.com', Cidade: 'Belo Horizonte' }
+    ];
 
-/* ===========================
-   🗂️ Seções e Botões
-=========================== */
-.btn-toggle.active {
-  background-color: #ffffff;
-  color: black;
-}
+    // Monta as linhas para grid.js com a row expansível
+    function buildRows(dataset) {
+      return dataset.map(item => {
+        // Monta o HTML do detalhe com todos os campos e valores
+        const detailsHtml = Object.entries(item).map(([key, val]) =>
+          `<strong>${key}:</strong> ${val}<br>`
+        ).join("");
 
-#heroes.active-tab {
-  background-color: rgba(229, 115, 115, 0.8);
-}
+        // A primeira coluna terá o toggle, as outras serão normais
+        return [
+          gridjs.html(`
+            <div class="expand-row" onclick="toggleDetails(this)">
+              <div>${item['Nome'] || '(sem nome)'}</div>
+              <div class="gridjs-details">${detailsHtml}</div>
+            </div>
+          `),
+          item['Idade'] || '',
+          item['Email'] || '',
+          item['Cidade'] || ''
+        ];
+      });
+    }
 
-#standings.active-tab {
-  background-color: rgba(100, 181, 246, 0.8);
-}
-
-#pairings.active-tab {
-  background-color: rgba(129, 199, 132, 0.8);
-}
-
-/* ===========================
-   🔍 Filtro & Search
-=========================== */
-.filter-wrapper {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-  gap: 1rem;
-}
-
-select[id^="year-filter-"] {
-  width: 140px;
-  padding: 7.5px 8px;
-  font-size: 0.875rem;
-  flex-shrink: 0;
-}
-
-.search-container {
-  flex-grow: 1;
-  max-width: 300px;
-  min-width: 120px;
-}
-
-/* ===========================
-   📊 Grid.js Ajustes
-=========================== */
-.gridjs-wrapper,
-.gridjs-container {
-  width: 100% !important;
-  overflow-x: auto !important;
-  max-width: 100vw;
-  box-sizing: border-box;
-}
-
-.upload-spinner {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-}
-
-.upload-spinner .loader {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3498db;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* ===========================
-   📱 Responsivo
-=========================== */
-@media (max-width: 768px) {
-  .header-top {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .top-row {
-    flex-direction: row;
-    width: 100%;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .menu-toggle {
-    display: block;
-  }
-
-  nav.nav-links {
-    display: none;
-    flex-direction: column;
-    width: 100%;
-    margin-top: 10px;
-    gap: 10px;
-    align-items: flex-start;
-  }
-
-  nav.nav-links.active {
-    display: flex;
-  }
-
-  .footer-content {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .footer-content p {
-    white-space: normal;
-  }
-
-  .filter-wrapper {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .search-container {
-    max-width: 100%;
-    margin-bottom: 8px;
-  }
-
-  select[id^="year-filter-"] {
-    width: 100%;
-  }
-
-  .gridjs-table td:not(:first-child),
-  .gridjs-table th:not(:first-child) {
-    display: none;
-  }
-
-  .expand-row {
-    cursor: pointer;
-    background-color: #e3f2fd;
-    padding: 8px;
-  }
-
-  .gridjs-details {
-    display: none;
-    font-size: 0.9rem;
-    margin-top: 5px;
-    background-color: #f1f1f1;
-    padding: 8px;
-    border-radius: 4px;
-  }
-
-  .gridjs-details.visible {
-    display: block;
-  }
-}
-
-@media (min-width: 769px) {
-  .gridjs-details {
-    display: none !important;
-  }
-}
-
-/* ===========================
-   🧼 Utilitários
-=========================== */
-.hidden {
-  display: none !important;
-}
-
-/* ===========================
-   🎨 Botão estilo Material 3
-=========================== */
-.md3-button-link {
-  background-color: var(--md-sys-color-secondary-container, #f1c40f);
-  color: black;
-  padding: 10px 16px;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 500;
-  display: inline-block;
-  transition: background-color 0.3s ease;
-}
-
-.md3-button-link:hover {
-  background-color: #e1b80f;
-}
+    // Inicializa a grid
+    new gridjs.Grid({
+      columns: columns,
+      data: buildRows(data),
+      search: true,
+      pagination: { enabled: true, limit: 5 },
+      sort: true,
+      className: {
+        table: 'table table-striped table-hover text-black bg-white'
+      }
+    }).render(document.getElementById("table-container"));
+  </script>
+</body>
+</html>
