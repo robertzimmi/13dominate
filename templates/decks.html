@@ -1,0 +1,94 @@
+{% extends "home.html" %}
+
+{% block title %}Decks{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <style>
+    /* Card grande que envolve tudo */
+    .main-card {
+      border-radius: 1rem;
+      padding: 2rem;
+      box-shadow: 0 0 15px rgba(0,0,0,0.15);
+      background-color: #fff;
+      margin-top: 3rem;
+      margin-bottom: 3rem;
+    }
+
+    /* Cards pequenos dos decks */
+    .deck-card {
+      border: none;
+      border-radius: 0.75rem;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease;
+      cursor: pointer;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .deck-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+      z-index: 2;
+    }
+
+    .deck-card img {
+      width: 100%;
+      height: auto;
+      object-fit: cover;
+      border-top-left-radius: 0.75rem;
+      border-top-right-radius: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    .deck-title {
+      padding: 0.5rem 0.75rem;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #690B22;
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Gaps entre os cards */
+    .row.g-3 > [class*="col-"] {
+      margin-bottom: 1.5rem;
+    }
+
+    /* Responsividade para telas pequenas */
+    @media (max-width: 576px) {
+      .deck-title {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="main-card">
+    <h2 class="text-center mb-4" style="color: #690B22;">Decks</h2>
+
+    {% for group, group_decks in decks.items() %}
+      <h4 class="mt-4 mb-3" style="color: #690B22;">{{ group }}</h4>
+      <div class="row g-3">
+        {% for deck in group_decks %}
+          <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+            <a href="{{ deck.url }}" target="_blank" class="text-decoration-none">
+              <div class="deck-card">
+                <img src="{{ deck.image }}" alt="{{ deck.name }}">
+                <div class="deck-title">{{ deck.name }}</div>
+              </div>
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

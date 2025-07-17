@@ -15,6 +15,7 @@ from routes.home_routes import home_bp
 from routes.api.topheroes import api_topheroes_bp
 from routes.sorteio_routes import sorteio_bp
 from routes.api.topplayers import api_topplayers
+from routes.deck_routes import decks_bp
 
 
 load_dotenv()
@@ -91,5 +92,6 @@ app.register_blueprint(home_bp)
 app.register_blueprint(api_topheroes_bp)
 app.register_blueprint(api_topplayers)
 app.register_blueprint(sorteio_bp)
+app.register_blueprint(decks_bp)
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

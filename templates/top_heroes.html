@@ -4,51 +4,65 @@
 
 {% block content %}
 
-<!-- 🔎 Filtros: Ano, Mês e Data -->
-<form class="d-flex justify-content-center align-items-center gap-2 mb-5" onsubmit="aplicarFiltros(event)">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<!-- 🔎 Filtros e Checkboxes dentro de um Card -->
+<div class="container px-2">
+  <div class="card shadow-sm p-3 rounded mb-4" style="max-width: 960px; margin: auto;">
+    
+    <!-- Formulário de Filtros -->
+    <form class="row g-2 justify-content-center align-items-center" onsubmit="aplicarFiltros(event)">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-  <select id="anoSelect" name="ano" class="form-select w-auto">
+      <div class="col-6 col-md-auto">
+        <select id="anoSelect" name="ano" class="form-select">
+          {% for ano in range(2019, 2026) %}
+            <option value="{{ ano }}" {% if ano|string == ano_selecionado|string or ano == 2025 %}selected{% endif %}>{{ ano }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-    {% for ano in range(2019, 2026) %}
-      <option value="{{ ano }}" {% if ano|string == ano_selecionado|string or ano == 2025 %}selected{% endif %}>{{ ano }}</option>
-    {% endfor %}
-  </select>
+      <div class="col-6 col-md-auto">
+        <select id="mesSelect" name="mes" class="form-select">
+          {% for numero, nome in [
+            (1, 'Janeiro'), (2, 'Fevereiro'), (3, 'Março'), (4, 'Abril'),
+            (5, 'Maio'), (6, 'Junho'), (7, 'Julho'), (8, 'Agosto'),
+            (9, 'Setembro'), (10, 'Outubro'), (11, 'Novembro'), (12, 'Dezembro')
+          ] %}
+            <option value="{{ numero }}" {% if numero|string == mes_selecionado|string or numero == mes_atual %}selected{% endif %}>{{ nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-  {% set mes_atual = mes_selecionado or now().month %}
-  <select id="mesSelect" name="mes" class="form-select w-auto">
-    {% for numero, nome in [
-      (1, 'Janeiro'), (2, 'Fevereiro'), (3, 'Março'), (4, 'Abril'),
-      (5, 'Maio'), (6, 'Junho'), (7, 'Julho'), (8, 'Agosto'),
-      (9, 'Setembro'), (10, 'Outubro'), (11, 'Novembro'), (12, 'Dezembro')
-    ] %}
-      <option value="{{ numero }}" {% if numero|string == mes_selecionado|string or numero == mes_atual %}selected{% endif %}>{{ nome }}</option>
-    {% endfor %}
-  </select>
+      <div class="col-12 col-md-auto">
+        <select id="dataSelect" name="dia" class="form-select">
+          {% for data in datas_filtradas %}
+            <option value="{{ data }}" {% if data|string == data_selecionada|string %}selected{% endif %}>
+              {{ data.strftime('%d/%m/%Y') }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
 
-  <select id="dataSelect" name="dia" class="form-select w-auto">
-    {% for data in datas_filtradas %}
-      <option value="{{ data }}" {% if data|string == data_selecionada|string %}selected{% endif %}>
-        {{ data.strftime('%d/%m/%Y') }}
-      </option>
-    {% endfor %}
-  </select>
+      <div class="col-12 col-md-auto">
+        <button type="submit" class="btn w-100" style="background-color: #690B22; color: #e6c646;">Filtrar</button>
 
-  <button type="submit" class="btn btn-primary">Filtrar</button>
-</form>
-<!-- 🎯 Checkboxes de formato -->
-<div class="d-flex justify-content-center align-items-center gap-3 mb-3" id="formato-checkboxes">
-  <label><input type="checkbox" name="formato" value="todos" checked> Todos</label>
-  <label><input type="checkbox" name="formato" value="classic"> CC</label>
-  <label><input type="checkbox" name="formato" value="legends"> LL</label>
-  <label><input type="checkbox" name="formato" value="commoner"> Commoner</label>
-  <label><input type="checkbox" name="formato" value="blitz"> Blitz</label>
+      </div>
+    </form>
+
+    <!-- 🎯 Checkboxes de formato -->
+    <div class="row justify-content-center mt-3" id="formato-checkboxes">
+      <div class="col-auto"><label><input type="checkbox" name="formato" value="todos" checked> Todos</label></div>
+      <div class="col-auto"><label><input type="checkbox" name="formato" value="classic"> CC</label></div>
+      <div class="col-auto"><label><input type="checkbox" name="formato" value="legends"> LL</label></div>
+      <div class="col-auto"><label><input type="checkbox" name="formato" value="commoner"> Commoner</label></div>
+      <div class="col-auto"><label><input type="checkbox" name="formato" value="blitz"> Blitz</label></div>
+    </div>
+
+  </div>
 </div>
-
 
 <!-- Cabeçalho da loja (imagem + nome) -->
 <div id="store-header" style="text-align:center; margin-bottom: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;">
-  <!-- Será preenchido via JS -->
+  <!-- Preenchido via JS -->
 </div>
 
 <!-- Grid dos heróis -->
@@ -57,6 +71,8 @@
     <p class="text-center w-100">Carregando heróis...</p>
   </div>
 </div>
+
+<!-- Scripts -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const checkboxes = document.querySelectorAll('input[name="formato"]');
@@ -82,19 +98,17 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  // Marcação única nos checkboxes
   checkboxes.forEach(cb => {
     cb.addEventListener('change', () => {
       if (cb.checked) {
         checkboxes.forEach(other => {
           if (other !== cb) other.checked = false;
         });
-        atualizarDias(); // atualiza os dias
+        atualizarDias();
       }
     });
   });
 
-  // Atualizar dias se ano ou mês mudar
   selectAno.addEventListener('change', atualizarDias);
   selectMes.addEventListener('change', atualizarDias);
 });
@@ -104,8 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
 async function carregarDatas(ano, mes) {
   const dataSelect = document.getElementById('dataSelect');
   dataSelect.innerHTML = `<option value="">Carregando...</option>`;
-
-  // ✅ Captura o formato selecionado
   const formato = document.querySelector('input[name="formato"]:checked')?.value || 'todos';
 
   try {
@@ -140,8 +152,6 @@ async function carregarDatas(ano, mes) {
 async function carregarHeroes(filtros) {
   const grid = document.getElementById("heroes-grid");
   grid.innerHTML = `<div class="col"><p class="text-center w-100">Carregando...</p></div>`;
-
-  // ✅ Adiciona o formato aos filtros
   const formatoSelecionado = document.querySelector('input[name="formato"]:checked')?.value || 'todos';
   filtros.formato = formatoSelecionado;
 
@@ -160,13 +170,11 @@ async function carregarHeroes(filtros) {
     const storeName = response.store_name;
     const formato = response.formato || formatoSelecionado;
 
-    // Monta o header da loja (imagem + nome + formato)
     const storeHeader = document.getElementById("store-header");
     storeHeader.innerHTML = '';
 
     if (storeName) {
       const nomeImagemLoja = storeName.toUpperCase().replace(/\s+/g, '_') + '.JPG';
-
       const imgLoja = document.createElement('img');
       imgLoja.src = `/static/img/lojas/${nomeImagemLoja}`;
       imgLoja.alt = storeName;
@@ -185,7 +193,6 @@ async function carregarHeroes(filtros) {
       storeHeader.appendChild(nomeLojaElem);
     }
 
-    // Limpa o grid dos heróis
     grid.innerHTML = "";
 
     if (!herois || herois.length === 0) {
@@ -252,14 +259,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <!-- Estilo da caixa WIN -->
 <style>
+  #formato-checkboxes label {
+    color: #690B22;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  /* Para dar um efeito visual quando checkbox estiver marcado */
+  #formato-checkboxes input[type="checkbox"] {
+    accent-color: #690B22;
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+  }  
 .win-square {
   position: absolute;
   top: 10px;
   right: 10px;
   width: 48px;
   height: 48px;
-  background-color: rgba(0, 123, 255, 0.9);
-  color: white;
+  background-color: #690B22;
+  color: #e6c646;
   font-weight: bold;
   text-align: center;
   border-radius: 8px;
