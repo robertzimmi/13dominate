@@ -138,6 +138,9 @@
             <a class="nav-link {% if request.endpoint == 'decks.decks' %}active{% endif %}" href="{{ url_for('decks.decks') }}">Decks</a>
           </li>
           <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'ligacommoner.ligacommoner_home' %}active{% endif %}" href="{{ url_for('ligacommoner.ligacommoner_home') }}">LigaCommoner</a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link {% if request.endpoint == 'home_bp.aprender' %}active{% endif %}" href="{{ url_for('home_bp.aprender') }}">Aprenda</a>
           </li>        
         </ul>

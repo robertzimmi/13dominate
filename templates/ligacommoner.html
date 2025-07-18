@@ -1,0 +1,148 @@
+{% extends "home.html" %}
+
+{% block title %}Liga Commoner{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+
+  <h1 class="mb-4 text-center">Liga Commoner - Resultados por Loja</h1>
+
+  <!-- Card Principal -->
+  <div class="card p-3 shadow">
+
+    <!-- Ícones de Seleção -->
+    <div class="d-flex justify-content-center gap-4 mb-4">
+      {% for loja in dados.keys() if loja != "herois_por_loja" %}
+        <img src="{{ url_for('static', filename='img/lojas/' ~ loja ~ '.JPG') }}"
+             alt="{{ loja }}"
+             class="loja-icon"
+             onclick="mostrarCardLoja('{{ loja }}')"
+             style="cursor: pointer; width: 80px; height: 80px; border-radius: 50%; box-shadow: 0 0 6px rgba(0,0,0,0.3);" />
+      {% endfor %}
+    </div>
+
+    <!-- Cards das Lojas -->
+    {% for loja, players in dados.items() %}
+      {% if loja != "herois_por_loja" %}
+        <div id="card-loja-{{ loja }}" class="card mb-4" hidden>
+          <div class="card-header text-white text-center" style="background-color: #690B22;">
+            {{ loja }}
+          </div>
+          <div class="card-body">
+
+            <div class="row g-3">
+
+              <!-- Card Tabela -->
+              <div class="col-12 col-md-6">
+                <div class="card shadow-sm h-100">
+                  <div class="card-header bg-secondary text-white text-center">
+                    Jogadores - {{ loja }}
+                  </div>
+                  <div class="card-body p-2" style="overflow-x:auto;">
+                    <table class="table table-sm table-striped table-hover mb-0">
+                      <thead>
+                        <tr>
+                          <th>Jogador</th>
+                          <th>Pontos</th>
+                          <th>% Vitórias</th>
+                          <th>Vitórias</th>
+                          <th>Rodadas</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% if players %}
+                          {% for p in players %}
+                            <tr>
+                              <td>{{ p.Player }}</td>
+                              <td>{{ "%.2f"|format(p.Pontos) }}</td>
+                              <td>{{ "%.2f"|format(p.WinPercent) }}%</td>
+                              <td>{{ p.Wins }}</td>
+                              <td>{{ p.Rounds }}</td>
+                            </tr>
+                          {% endfor %}
+                        {% else %}
+                          <tr>
+                            <td colspan="5" class="text-center">Nenhum dado encontrado.</td>
+                          </tr>
+                        {% endif %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card Gráfico -->
+              <div class="col-12 col-md-6 d-flex justify-content-center align-items-center">
+                <div class="card shadow-sm p-3" style="max-width: 450px; width: 100%;">
+                  <canvas id="chart-{{ loja }}"></canvas>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-pattern@1.1.5/dist/chartjs-plugin-pattern.min.js"></script>
+
+<script>
+  const dadosHerois = {{ dados['herois_por_loja'] | tojson }};
+
+  function mostrarCardLoja(lojaAtiva) {
+    // Esconde todos os cards das lojas
+    const cardsLoja = document.querySelectorAll('[id^="card-loja-"]');
+    cardsLoja.forEach(card => card.hidden = true);
+
+    // Mostra o card da loja clicada
+    const cardSelecionado = document.getElementById(`card-loja-${lojaAtiva}`);
+    if (cardSelecionado) {
+      cardSelecionado.hidden = false;
+      if (!window['chart_' + lojaAtiva]) {
+        criarGrafico(lojaAtiva, dadosHerois[lojaAtiva] || []);
+      }
+    }
+  }
+
+  function criarGrafico(loja, herois) {
+    const ctx = document.getElementById(`chart-${loja}`).getContext('2d');
+
+    const patterns = herois.map(h => {
+      const img = new Image();
+      img.src = h.img;
+      return { pattern: ctx.createPattern(img, 'repeat'), image: img };
+    });
+
+    Promise.all(patterns.map(p => new Promise(res => { p.image.onload = res; }))).then(() => {
+      const data = {
+        labels: herois.map(h => h.hero),
+        datasets: [{
+          data: herois.map(h => h.percent),
+          backgroundColor: patterns.map(p => p.pattern),
+          borderColor: '#fff',
+          borderWidth: 2,
+        }]
+      };
+
+      window['chart_' + loja] = new Chart(ctx, {
+        type: 'pie',
+        data: data,
+        options: {
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.label}: ${ctx.parsed.toFixed(2)}%`
+              }
+            }
+          }
+        }
+      });
+    });
+  }
+</script>
+{% endblock %}
