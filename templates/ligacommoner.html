@@ -3,36 +3,71 @@
 {% block title %}Liga Commoner{% endblock %}
 
 {% block content %}
-<div class="container my-4">
+<style>
+  .mosaico-grid {
+    position: relative;
+    width: 400px;
+    height: 400px;
+    background: #555;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+  }
 
+  .bloco {
+    position: absolute;
+    background-size: cover;
+    background-position: center;
+    border: 1px solid #333;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  .bloco:hover {
+    filter: brightness(1.1);
+    z-index: 10;
+  }
+
+  .loja-icon {
+    cursor: pointer;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    box-shadow: 0 0 6px rgba(0,0,0,0.3);
+    object-fit: cover;
+  }
+</style>
+
+<div class="container my-4">
   <h1 class="mb-4 text-center">Liga Commoner - Resultados por Loja</h1>
 
-  <!-- Card Principal -->
   <div class="card p-3 shadow">
 
-    <!-- Ícones de Seleção -->
     <div class="d-flex justify-content-center gap-4 mb-4">
-      {% for loja in dados.keys() if loja != "herois_por_loja" %}
+      {# Exibe só as lojas reais #}
+      {% for loja in dados.keys() if loja not in ['herois_por_loja', 'ratio'] %}
         <img src="{{ url_for('static', filename='img/lojas/' ~ loja ~ '.JPG') }}"
              alt="{{ loja }}"
              class="loja-icon"
-             onclick="mostrarCardLoja('{{ loja }}')"
-             style="cursor: pointer; width: 80px; height: 80px; border-radius: 50%; box-shadow: 0 0 6px rgba(0,0,0,0.3);" />
+             onclick="mostrarCardLoja('{{ loja }}')" />
       {% endfor %}
+
+      {# Botão separado para RATIO #}
+      <img src="{{ url_for('static', filename='img/lojas/RATIO.JPG') }}"
+           alt="RATIO"
+           class="loja-icon"
+           onclick="mostrarCardLoja('ratio')" />
     </div>
 
-    <!-- Cards das Lojas -->
+    {# Cards das lojas reais #}
     {% for loja, players in dados.items() %}
-      {% if loja != "herois_por_loja" %}
+      {% if loja not in ['herois_por_loja', 'ratio'] %}
         <div id="card-loja-{{ loja }}" class="card mb-4" hidden>
           <div class="card-header text-white text-center" style="background-color: #690B22;">
             {{ loja }}
           </div>
           <div class="card-body">
-
             <div class="row g-3">
-
-              <!-- Card Tabela -->
               <div class="col-12 col-md-6">
                 <div class="card shadow-sm h-100">
                   <div class="card-header bg-secondary text-white text-center">
@@ -71,78 +106,114 @@
                 </div>
               </div>
 
-              <!-- Card Gráfico -->
               <div class="col-12 col-md-6 d-flex justify-content-center align-items-center">
                 <div class="card shadow-sm p-3" style="max-width: 450px; width: 100%;">
-                  <canvas id="chart-{{ loja }}"></canvas>
+                  <div id="mosaico-{{ loja }}" class="mosaico-grid mx-auto"></div>
                 </div>
               </div>
-
             </div>
-
           </div>
         </div>
       {% endif %}
     {% endfor %}
+
+    {# Card especial para RATIO #}
+    <div id="card-loja-ratio" class="card mb-4" hidden>
+      <div class="card-header text-white text-center" style="background-color: #690B22;">
+        RATIO
+      </div>
+      <div class="card-body">
+        <p>Conteúdo especial do RATIO aqui. Pode colocar gráficos, tabelas ou o que precisar.</p>
+      </div>
+    </div>
+
   </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-pattern@1.1.5/dist/chartjs-plugin-pattern.min.js"></script>
 
 <script>
   const dadosHerois = {{ dados['herois_por_loja'] | tojson }};
 
   function mostrarCardLoja(lojaAtiva) {
-    // Esconde todos os cards das lojas
-    const cardsLoja = document.querySelectorAll('[id^="card-loja-"]');
-    cardsLoja.forEach(card => card.hidden = true);
+    // Esconde todos os cards
+    document.querySelectorAll('[id^="card-loja-"]').forEach(card => card.hidden = true);
 
-    // Mostra o card da loja clicada
+    // Mostra o card da loja ou do ratio
     const cardSelecionado = document.getElementById(`card-loja-${lojaAtiva}`);
     if (cardSelecionado) {
       cardSelecionado.hidden = false;
-      if (!window['chart_' + lojaAtiva]) {
-        criarGrafico(lojaAtiva, dadosHerois[lojaAtiva] || []);
+      if (!window['mosaico_' + lojaAtiva]) {
+        // Só cria mosaico para lojas que tenham dados (não para RATIO)
+        if (dadosHerois[lojaAtiva]) {
+          criarMosaico(lojaAtiva, dadosHerois[lojaAtiva]);
+        }
+        window['mosaico_' + lojaAtiva] = true;
       }
     }
   }
 
-  function criarGrafico(loja, herois) {
-    const ctx = document.getElementById(`chart-${loja}`).getContext('2d');
+  function criarMosaico(loja, herois) {
+    const container = document.getElementById(`mosaico-${loja}`);
+    if (!container) return;
 
-    const patterns = herois.map(h => {
-      const img = new Image();
-      img.src = h.img;
-      return { pattern: ctx.createPattern(img, 'repeat'), image: img };
-    });
+    container.innerHTML = "";
 
-    Promise.all(patterns.map(p => new Promise(res => { p.image.onload = res; }))).then(() => {
-      const data = {
-        labels: herois.map(h => h.hero),
-        datasets: [{
-          data: herois.map(h => h.percent),
-          backgroundColor: patterns.map(p => p.pattern),
-          borderColor: '#fff',
-          borderWidth: 2,
-        }]
-      };
+    const totalArea = 400 * 400; // área total px²
+    const somaPercent = herois.reduce((s, h) => s + Number(h.percent), 0);
+    if (somaPercent === 0) return;
 
-      window['chart_' + loja] = new Chart(ctx, {
-        type: 'pie',
-        data: data,
-        options: {
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: ctx => `${ctx.label}: ${ctx.parsed.toFixed(2)}%`
-              }
-            }
-          }
-        }
+    herois.sort((a, b) => Number(b.percent) - Number(a.percent));
+
+    let metadePercent = somaPercent / 2;
+    let linha1 = [];
+    let linha2 = [];
+    let somaLinha1 = 0;
+
+    for (const h of herois) {
+      if (somaLinha1 + Number(h.percent) <= metadePercent || linha1.length === 0) {
+        linha1.push(h);
+        somaLinha1 += Number(h.percent);
+      } else {
+        linha2.push(h);
+      }
+    }
+
+    function posicionarLinha(linha, topo, alturaLinha) {
+      let larguraDisponivel = 400;
+      let x = 0;
+
+      const larguras = linha.map(h => {
+        const area = (Number(h.percent) / somaPercent) * totalArea;
+        const largura = Math.ceil(area / alturaLinha);
+        return largura;
       });
-    });
+
+      let somaLarguras = larguras.reduce((a, b) => a + b, 0);
+      const sobra = larguraDisponivel - somaLarguras;
+      if (sobra !== 0) {
+        larguras[larguras.length - 1] += sobra;
+      }
+
+      linha.forEach((h, i) => {
+        const largura = larguras[i];
+
+        const div = document.createElement("div");
+        div.className = "bloco";
+        div.title = `${h.hero}: ${Number(h.percent).toFixed(2)}%`;
+        div.style.backgroundImage = `url('${h.img}')`;
+
+        div.style.top = `${topo}px`;
+        div.style.left = `${x}px`;
+        div.style.width = `${largura}px`;
+        div.style.height = `${alturaLinha}px`;
+
+        container.appendChild(div);
+
+        x += largura;
+      });
+    }
+
+    posicionarLinha(linha1, 0, 200);
+    posicionarLinha(linha2, 200, 200);
   }
 </script>
 {% endblock %}
