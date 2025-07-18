@@ -39,10 +39,11 @@ def ligacommoner_home():
         SUM(s."Wins") AS total_wins,
         SUM(
           CASE 
-            WHEN EXTRACT(MONTH FROM ef.data) = 6 AND EXTRACT(YEAR FROM ef.data) = 2025 THEN COALESCE(hp."062025", 0) * s."Wins"
-            WHEN EXTRACT(MONTH FROM ef.data) = 7 AND EXTRACT(YEAR FROM ef.data) = 2025 THEN COALESCE(hp."072025", 0) * s."Wins"
-            ELSE 0
-          END
+  WHEN EXTRACT(MONTH FROM ef.data) = 6 AND EXTRACT(YEAR FROM ef.data) = 2025 THEN COALESCE(hp."062025", 0) * s."Wins"
+  WHEN EXTRACT(MONTH FROM ef.data) = 7 AND EXTRACT(YEAR FROM ef.data) = 2025 THEN COALESCE(hp."072025", 0) * s."Wins"
+  ELSE COALESCE(hp."072025", 0) * s."Wins"
+END
+
         ) AS pontos
       FROM standings s
       JOIN eventos_filtrados ef ON s.event_id = ef.event_id
