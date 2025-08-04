@@ -18,7 +18,6 @@ def delete_day():
             conn = connect_db()
             cur = conn.cursor()
 
-            # 🧠 Buscar os IDs dos eventos dessa data
             cur.execute("SELECT id FROM eventos WHERE data = %s", (data_str,))
             eventos_ids = [row[0] for row in cur.fetchall()]
 
@@ -26,44 +25,30 @@ def delete_day():
                 flash(f"Nenhum evento encontrado na data {data_str}.", "info")
                 return redirect(url_for('delete_bp.delete_day'))
 
-            print(f"\n=== INICIANDO DELEÇÃO PARA {data_str} ===")
+            print(f"\n=== INICIANDO ARQUIVAMENTO PARA {data_str} ===")
 
             for eid in eventos_ids:
                 print(f"➡️ Deletando dados do evento ID {eid}...")
-
-                print(f"DELETE FROM standings WHERE event_id = {eid}")
                 cur.execute("DELETE FROM standings WHERE event_id = %s", (eid,))
-
-                print(f"DELETE FROM pairings WHERE event_id = {eid}")
                 cur.execute("DELETE FROM pairings WHERE event_id = %s", (eid,))
-
-                print(f"DELETE FROM heroes WHERE event_id = {eid}")
                 cur.execute("DELETE FROM heroes WHERE event_id = %s", (eid,))
-
-                print(f"DELETE FROM calendar WHERE event_id = {eid}")
                 cur.execute("DELETE FROM calendar WHERE event_id = %s", (eid,))
-
-                print(f"DELETE FROM eventos WHERE id = {eid}")
                 cur.execute("DELETE FROM eventos WHERE id = %s", (eid,))
 
-            # 📁 Google Drive - arquivar pasta
-            print(f"🗂️ Arquivando pasta do Google Drive: {data_str}")
-            archive_drive_folder_by_date(data_str)  # <- em vez de deletar, arquiva
+            print(f"📦 Movendo pastas para 'DELETADO': {data_str}")
+            archive_drive_folder_by_date(data_str)  # ✅ Aqui em vez de delete
 
-            # Atualizar materialized views
             cur.execute("REFRESH MATERIALIZED VIEW mv_pairings_aggregated;")
             cur.execute("REFRESH MATERIALIZED VIEW v_hero_stats_mat;")
             print("[INFO] Materialized views atualizadas.")
-
             conn.commit()
-            print("✅ Commit realizado com sucesso.")
-            flash(f"Data {data_str} deletada com sucesso!", "success")
+            flash(f"Data {data_str} deletada do banco e arquivada no Drive!", "success")
 
         except Exception as e:
             if conn:
                 conn.rollback()
             print(f"❌ ERRO: {e}")
-            flash(f"Erro ao deletar data {data_str}: {e}", "danger")
+            flash(f"Erro ao processar deleção/arquivamento: {e}", "danger")
 
         finally:
             if conn:
@@ -71,6 +56,5 @@ def delete_day():
 
         return redirect(url_for('delete_bp.delete_day'))
 
-    # GET: listar datas
     datas = get_available_dates()
     return render_template("delete_day.html", datas=datas)
