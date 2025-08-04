@@ -138,7 +138,7 @@ def upload_submit():
             conn.rollback()
         return jsonify({
             "success": False,
-            "message": f"❌ Erro: confira a posição dos arquivos}"
+            "message": f"❌ Erro: confira os arquivos"
         }), 500
 
     finally:
