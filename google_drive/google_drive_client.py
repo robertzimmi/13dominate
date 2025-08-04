@@ -119,7 +119,11 @@ def archive_drive_folder_by_date(data_str):
     parent_names = ['ARENA', 'BOLOVO', 'CAVERNA']
 
     # Buscar ID da pasta "DELETADO"
-    query_deleted = "name = 'DELETADO' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+    query_deleted = (
+    "name = 'DELETADO' and mimeType = 'application/vnd.google-apps.folder' "
+    "and trashed = false and 'root' in parents"
+)
+
     deleted_res = service.files().list(q=query_deleted, fields="files(id, name)").execute()
     deleted_folders = deleted_res.get("files", [])
     
