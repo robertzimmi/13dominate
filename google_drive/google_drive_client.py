@@ -113,13 +113,22 @@ def upload_to_drive(file_stream: BytesIO, file_name: str, root_folder: str, subf
 
 # google_drive_client.py
 
-def delete_drive_folder_by_date(data_str):
+def archive_drive_folder_by_date(data_str):
     service = get_service()
     parent_names = ['ARENA', 'BOLOVO', 'CAVERNA']
 
+    # Buscar ID da pasta "DELETADO"
+    query_deleted = "name = 'DELETADO' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+    deleted_res = service.files().list(q=query_deleted, fields="files(id, name)").execute()
+    deleted_folders = deleted_res.get("files", [])
+    
+    if not deleted_folders:
+        raise Exception("❌ Pasta 'DELETADO' não encontrada na raiz do Google Drive.")
+
+    deleted_folder_id = deleted_folders[0]["id"]
+
     for loja in parent_names:
         print(f"\n🔎 Buscando pasta raiz da loja: {loja}")
-        # Busca pela pasta da loja (raiz)
         query_raiz = f"name = '{loja}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
         res = service.files().list(q=query_raiz, fields="files(id, name)").execute()
         pastas_raiz = res.get("files", [])
@@ -129,8 +138,6 @@ def delete_drive_folder_by_date(data_str):
             continue
 
         raiz_id = pastas_raiz[0]["id"]
-
-        # Nome da subpasta esperado começa com LOJA_data
         prefixo = f"{loja}_{data_str}_"
 
         query_subpasta = (
@@ -139,16 +146,30 @@ def delete_drive_folder_by_date(data_str):
             f"mimeType = 'application/vnd.google-apps.folder' and trashed = false"
         )
 
-        subpastas = service.files().list(q=query_subpasta, fields="files(id, name)").execute().get("files", [])
+        subpastas = service.files().list(q=query_subpasta, fields="files(id, name, parents)").execute().get("files", [])
 
         if not subpastas:
             print(f"📁 Nenhuma subpasta com data {data_str} dentro de {loja}")
             continue
 
         for pasta in subpastas:
-            if pasta["name"].startswith(prefixo):
-                print(f"🗑️ Deletando: {pasta['name']}")
-                service.files().delete(fileId=pasta['id']).execute()
-                print("✅ Deletado com sucesso.")
+            nome_original = pasta["name"]
+            if nome_original.startswith(prefixo):
+                novo_nome = nome_original + "_deleted"
+                pasta_id = pasta["id"]
+                parent_id = pasta["parents"][0]["id"]
+
+                # Renomear a pasta
+                service.files().update(fileId=pasta_id, body={"name": novo_nome}).execute()
+                print(f"✏️ Renomeado: {nome_original} ➡️ {novo_nome}")
+
+                # Mover para pasta DELETADO
+                service.files().update(
+                    fileId=pasta_id,
+                    addParents=deleted_folder_id,
+                    removeParents=parent_id,
+                    fields='id, parents'
+                ).execute()
+                print(f"📦 Movido para pasta 'DELETADO'")
             else:
-                print(f"⏩ Ignorando pasta '{pasta['name']}' (prefixo diferente)")
+                print(f"⏩ Ignorando pasta '{nome_original}' (prefixo diferente)")

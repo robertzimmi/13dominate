@@ -7,12 +7,12 @@ decks_bp = Blueprint('decks', __name__)
 # Dados dos decks
 deck_groups = {
     "Commoner": [
-        {"name": "Ira, Crimson Haze", "url": "http://google.com"},
-        {"name": "Enigma", "url": "http://google.com"},
-        {"name": "Dash", "url": "http://google.com"},
-        {"name": "Briar", "url": "http://google.com"},
-        {"name": "Verdance", "url": "http://google.com"},
-        {"name": "Chane", "url": "http://google.com"}
+        {"name": "Ira, Crimson Haze", "url": "https://fabrary.net/decks/01JVBR8KT3C3563VNJPE5HEPT7"},
+        {"name": "Enigma", "url": "https://fabrary.net/decks/01JVBVV6DDBY2ZBJB692EZFF55"},
+        {"name": "Dash", "url": "https://fabrary.net/decks/01JVBSVY4TZ96QW52PKCMXB9QG"},
+        {"name": "Briar", "url": "https://fabrary.net/decks/01JVBQB9B1EY1BM0RARVYH2YNR"},
+        {"name": "Verdance", "url": "https://fabrary.net/decks/01J7SS3PPF5VYZPJZN503V9P8Y"},
+        {"name": "Chane", "url": "https://fabrary.net/decks/01JVBQAPP2K35RQVY85XEWR4NK"}
     ],
     "CC AD upgrade": [
         {"name": "Ira, Scarlet Revenger", "url": "http://google.com"}

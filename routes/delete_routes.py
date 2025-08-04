@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from db.db_utils import connect_db
 from list_adm.topheroes_pop import get_available_dates
-from google_drive.google_drive_client import delete_drive_folder_by_date
+from google_drive.google_drive_client import archive_drive_folder_by_date  # <- novo import
 
 delete_bp = Blueprint('delete_bp', __name__)
 
@@ -46,13 +46,15 @@ def delete_day():
                 print(f"DELETE FROM eventos WHERE id = {eid}")
                 cur.execute("DELETE FROM eventos WHERE id = %s", (eid,))
 
-            # 🧨 Google Drive
-             # 🧨 Google Drive (aqui agora pode levantar erro e cancelar tudo)
-            print(f"🗂️ Deletando pasta do Google Drive: {data_str}")
-            delete_drive_folder_by_date(data_str)  # se falhar, rollback acontecerá
+            # 📁 Google Drive - arquivar pasta
+            print(f"🗂️ Arquivando pasta do Google Drive: {data_str}")
+            archive_drive_folder_by_date(data_str)  # <- em vez de deletar, arquiva
+
+            # Atualizar materialized views
             cur.execute("REFRESH MATERIALIZED VIEW mv_pairings_aggregated;")
             cur.execute("REFRESH MATERIALIZED VIEW v_hero_stats_mat;")
-            print("[INFO] Materialized view atualizada.")
+            print("[INFO] Materialized views atualizadas.")
+
             conn.commit()
             print("✅ Commit realizado com sucesso.")
             flash(f"Data {data_str} deletada com sucesso!", "success")
