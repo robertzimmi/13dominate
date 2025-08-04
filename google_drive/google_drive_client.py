@@ -1,4 +1,3 @@
-# google_drive/google_drive_client.py
 import os
 from io import BytesIO
 from google.oauth2.credentials import Credentials
@@ -13,6 +12,7 @@ CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
 REFRESH_TOKEN = os.getenv('GOOGLE_REFRESH_TOKEN')
 TOKEN_URI = 'https://oauth2.googleapis.com/token'
 
+
 def get_service():
     creds = Credentials(
         None,
@@ -23,6 +23,7 @@ def get_service():
     )
     return build('drive', 'v3', credentials=creds)
 
+
 def get_or_create_folder(service, folder_name, parent_id=None):
     print(f"[GoogleDrive] 🔍 Procurando pasta: '{folder_name}'", end="")
     if parent_id:
@@ -31,7 +32,6 @@ def get_or_create_folder(service, folder_name, parent_id=None):
     else:
         print(" na raiz do Drive")
         query = f"name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and 'root' in parents"
-
 
     results = service.files().list(
         q=query,
@@ -70,6 +70,24 @@ def get_or_create_folder(service, folder_name, parent_id=None):
         print(f"[GoogleDrive] ❌ {error_msg}")
         raise RuntimeError(error_msg)
 
+
+def find_root_folder(service, folder_name):
+    """Busca uma pasta pelo nome exclusivamente na raiz do Drive."""
+    query = (
+        f"name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+    )
+    results = service.files().list(q=query, fields="files(id, name, parents)").execute()
+    folders = results.get("files", [])
+
+    for folder in folders:
+        parents = folder.get("parents", [])
+        if not parents or 'root' in parents:
+            print(f"[GoogleDrive] ✅ Pasta '{folder_name}' encontrada na raiz (ID: {folder['id']})")
+            return folder["id"]
+
+    raise Exception(f"❌ Pasta '{folder_name}' não encontrada na raiz do Google Drive.")
+
+
 def upload_to_drive(file_stream: BytesIO, file_name: str, root_folder: str, subfolder: str):
     try:
         service = get_service()
@@ -93,13 +111,11 @@ def upload_to_drive(file_stream: BytesIO, file_name: str, root_folder: str, subf
         media = MediaIoBaseUpload(file_stream, mimetype='text/csv', resumable=True)
 
         if files:
-            # Atualizar
             file_id = files[0]['id']
             service.files().update(fileId=file_id, media_body=media).execute()
             print(f"[UPLOAD] ♻️ Arquivo atualizado: {file_name}")
             return f"♻️ Arquivo '{file_name}' atualizado na pasta '{root_folder}/{subfolder}'."
         else:
-            # Enviar novo
             file_metadata = {
                 'name': file_name,
                 'parents': [subfolder_id]
@@ -112,25 +128,13 @@ def upload_to_drive(file_stream: BytesIO, file_name: str, root_folder: str, subf
         print(f"[UPLOAD] ❌ Erro: {repr(e)}")
         return f"❌ Erro ao enviar para o Google Drive: {repr(e)}"
 
-# google_drive_client.py
 
 def archive_drive_folder_by_date(data_str):
     service = get_service()
     parent_names = ['ARENA', 'BOLOVO', 'CAVERNA']
 
-    # Buscar ID da pasta "DELETADO"
-    query_deleted = (
-    "name = 'DELETADO' and mimeType = 'application/vnd.google-apps.folder' "
-    "and trashed = false and 'root' in parents"
-)
-
-    deleted_res = service.files().list(q=query_deleted, fields="files(id, name)").execute()
-    deleted_folders = deleted_res.get("files", [])
-    
-    if not deleted_folders:
-        raise Exception("❌ Pasta 'DELETADO' não encontrada na raiz do Google Drive.")
-
-    deleted_folder_id = deleted_folders[0]["id"]
+    # Buscar ID da pasta "DELETADO" na raiz
+    deleted_folder_id = find_root_folder(service, "DELETADO")
 
     for loja in parent_names:
         print(f"\n🔎 Buscando pasta raiz da loja: {loja}")
@@ -162,9 +166,9 @@ def archive_drive_folder_by_date(data_str):
             if nome_original.startswith(prefixo):
                 novo_nome = nome_original + "_deleted"
                 pasta_id = pasta["id"]
-                parent_id = pasta["parents"][0]["id"]
+                parent_id = pasta["parents"][0]
 
-                # Renomear a pasta
+                # Renomear
                 service.files().update(fileId=pasta_id, body={"name": novo_nome}).execute()
                 print(f"✏️ Renomeado: {nome_original} ➡️ {novo_nome}")
 
