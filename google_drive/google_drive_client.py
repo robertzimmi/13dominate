@@ -30,7 +30,8 @@ def get_or_create_folder(service, folder_name, parent_id=None):
         query = f"name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and '{parent_id}' in parents"
     else:
         print(" na raiz do Drive")
-        query = f"name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder'"
+        query = f"name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and 'root' in parents"
+
 
     results = service.files().list(
         q=query,
