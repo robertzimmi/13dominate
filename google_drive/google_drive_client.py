@@ -71,21 +71,24 @@ def get_or_create_folder(service, folder_name, parent_id=None):
         raise RuntimeError(error_msg)
 
 
-def find_root_folder(service, folder_name):
-    """Busca uma pasta pelo nome exclusivamente na raiz do Drive."""
+def find_folder_in_root(service, folder_name):
+    """
+    Busca por uma pasta na raiz do Google Drive com o nome exato especificado.
+    """
     query = (
-        f"name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+        f"name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' "
+        f"and 'root' in parents and trashed = false"
     )
     results = service.files().list(q=query, fields="files(id, name, parents)").execute()
     folders = results.get("files", [])
 
-    for folder in folders:
-        parents = folder.get("parents", [])
-        if not parents or 'root' in parents:
-            print(f"[GoogleDrive] ✅ Pasta '{folder_name}' encontrada na raiz (ID: {folder['id']})")
-            return folder["id"]
+    if folders:
+        folder = folders[0]
+        print(f"[GoogleDrive] ✅ Pasta '{folder_name}' encontrada na raiz (ID: {folder['id']})")
+        return folder["id"]
+    else:
+        raise Exception(f"❌ Pasta '{folder_name}' não encontrada na raiz do Google Drive.")
 
-    raise Exception(f"❌ Pasta '{folder_name}' não encontrada na raiz do Google Drive.")
 
 
 def upload_to_drive(file_stream: BytesIO, file_name: str, root_folder: str, subfolder: str):
@@ -134,7 +137,8 @@ def archive_drive_folder_by_date(data_str):
     parent_names = ['ARENA', 'BOLOVO', 'CAVERNA']
 
     # Buscar ID da pasta "DELETADO" na raiz
-    deleted_folder_id = find_root_folder(service, "DELETADO")
+    deleted_folder_id = find_folder_in_root(service, "DELETADO")
+
 
     for loja in parent_names:
         print(f"\n🔎 Buscando pasta raiz da loja: {loja}")
